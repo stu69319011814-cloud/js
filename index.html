@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classroom Online Chat</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    
+    /* Login Overlay */
+    .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 999; }
+    .login-box { background: white; padding: 25px; border-radius: 12px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; text-align: center; }
+    .login-box h3 { color: #007bff; margin-bottom: 5px; }
+    .login-box input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
+    
+    /* Main Chat */
+    .chat-container { width: 100%; max-width: 600px; height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+    .control-bar { display: flex; gap: 8px; padding: 10px; background: #e9ecef; border-bottom: 1px solid #ddd; align-items: center; }
+    .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
+    .user-tag { font-weight: bold; color: #28a745; background: #e2f0d9; padding: 4px 8px; border-radius: 12px; }
+    
+    /* Messages Area */
+    .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
+    .message { max-width: 75%; padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; word-wrap: break-word; }
+    .message.mine { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .message.others { background: #e4e6eb; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .message .meta { font-size: 0.75rem; opacity: 0.8; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
+    .message a { color: inherit; font-weight: bold; text-decoration: underline; }
+
+    /* Input Area */
+    .chat-input { display: flex; gap: 8px; padding: 12px; background: #fff; border-top: 1px solid #ddd; align-items: center; }
+    .chat-input input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+    .btn { padding: 8px 16px; border: none; background: #007bff; color: white; border-radius: 20px; cursor: pointer; font-weight: bold; }
+    .btn:hover { background: #0056b3; }
+    .file-label { cursor: pointer; padding: 8px 12px; background: #6c757d; color: white; border-radius: 20px; font-size: 0.85rem; }
+  </style>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<!-- หน้าต่างล็อกอิน -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h3>เข้าสู่ระบบแชท</h3>
+    <input type="text" id="nicknameInput" placeholder="ระบุชื่อเล่นของคุณ..." required>
+    <input type="text" id="serverIpInput" placeholder="IP เครื่อง Server (เช่น 192.168.1.50:3000)">
+    <button class="btn" onclick="connectServer()">เข้าสู่ห้องแชท</button>
+  </div>
+</div>
+
+<div class="chat-container">
+  <div class="chat-header">Classroom Chat & Share</div>
+  
+  <div class="control-bar">
+    <span>ผู้ใช้: <span class="user-tag" id="myNickname">-</span></span>
+    <select id="chatMode" onchange="togglePrivateInput()">
+      <option value="group">แชทกลุ่ม</option>
+      <option value="private">แชทเดี่ยว</option>
+    </select>
+    <!-- เปลี่ยนจาก Input เป็น Select รายชื่อคนที่อยู่ออนไลน์จริง -->
+    <select id="targetUserSelect" style="display: none; flex: 1;">
+      <option value="">-- เลือกผู้รับ --</option>
+    </select>
+  </div>
+
+  <div class="chat-messages" id="chatBox"></div>
+
+  <div class="chat-input">
+    <label for="fileInput" class="file-label">📎 ไฟล์</label>
+    <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelect()">
+    <input type="text" id="messageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <button class="btn" onclick="sendMessage()">ส่ง</button>
+  </div>
+</div>
+
+<script>
+  let socket = null;
+  let myName = '';
+  let serverUrl = '';
+  let selectedFile = null;
+
+  function connectServer() {
+    myName = document.getElementById('nicknameInput').value.trim();
+    let ip = document.getElementById('serverIpInput').value.trim();
+
+    if (!myName) return alert('กรุณาระบุชื่อเล่น');
+
+    // ถ้าไม่กรอก IP ให้ใช้ Host ปัจจุบันที่เปิดหน้าเว็บอยู่
+    if (!ip) {
+      serverUrl = window.location.origin;
+    } else {
+      serverUrl = ip.startsWith('http') ? ip : `http://${ip}`;
+    }
+
+    // เชื่อมต่อ Socket.IO ไปยัง IP ที่ระบุ
+    socket = io(serverUrl);
+
+    socket.on('connect', () => {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('myNickname').textContent = myName;
+      socket.emit('register', myName);
+    });
+
+    socket.on('connect_error', () => {
+      alert('ไม่สามารถเชื่อมต่อ Server ได้ ตรวจสอบ IP และ Port อีกครั้ง');
+    });
+
+    // อัปเดตรายชื่อออนไลน์ในดรอปดาวน์
+    socket.on('online-users', (usersList) => {
+      const select = document.getElementById('targetUserSelect');
+      select.innerHTML = '<option value="">-- เลือกผู้รับ --</option>';
+      
+      usersList.forEach(user => {
+        if (user !== myName) {
+          const opt = document.createElement('option');
+          opt.value = user;
+          opt.textContent = user;
+          select.appendChild(opt);
+        }
+      });
+    });
+
+    // รับข้อความ
+    socket.on('receive-message', (data) => {
+      renderMessage(data, data.sender === myName);
+    });
+  }
+
+  function togglePrivateInput() {
+    const mode = document.getElementById('chatMode').value;
+    document.getElementById('targetUserSelect').style.display = mode === 'private' ? 'inline-block' : 'none';
+  }
+
+  function handleFileSelect() {
+    const file = document.getElementById('fileInput').files[0];
+    if (file) {
+      selectedFile = file;
+      alert(`เลือกไฟล์: ${file.name}`);
+    }
+  }
+
+  async function sendMessage() {
+    const msgText = document.getElementById('messageInput').value.trim();
+    const mode = document.getElementById('chatMode').value;
+    const target = document.getElementById('targetUserSelect').value;
+
+    if (mode === 'private' && !target) return alert('กรุณาเลือกผู้รับแชทเดี่ยว');
+    if (!msgText && !selectedFile) return;
+
+    let fileData = null;
+
+    // ถ้ามีไฟล์ ให้อัปโหลดไปยัง Server
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const res = await fetch(`${serverUrl}/upload`, { method: 'POST', body: formData });
+        const data = await res.json();
+        fileData = { name: data.fileName, url: `${serverUrl}${data.fileUrl}` };
+      } catch (err) {
+        alert('อัปโหลดไฟล์ไม่สำเร็จ');
+        return;
+      }
+    }
+
+    const payload = {
+      sender: myName,
+      text: msgText,
+      file: fileData,
+      target: target,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    if (mode === 'group') {
+      socket.emit('send-group', payload);
+    } else {
+      socket.emit('send-private', payload);
+    }
+
+    document.getElementById('messageInput').value = '';
+    document.getElementById('fileInput').value = '';
+    selectedFile = null;
+  }
+
+  function renderMessage(data, isMine) {
+    const chatBox = document.getElementById('chatBox');
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', isMine ? 'mine' : 'others');
+
+    let modeBadge = data.type === 'private' ? `🔒 [ส่วนตัวถึง ${data.target}]` : '👥 [กลุ่ม]';
+    let contentHtml = `<div class="meta"><span>${data.sender} ${modeBadge}</span><span>${data.time}</span></div>`;
+    
+    if (data.text) contentHtml += `<div>${data.text}</div>`;
+    if (data.file) {
+      contentHtml += `<div style="margin-top: 5px;">
+        📁 <a href="${data.file.url}" target="_blank" download>${data.file.name}</a>
+      </div>`;
+    }
+
+    msgDiv.innerHTML = contentHtml;
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
