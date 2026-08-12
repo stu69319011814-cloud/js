@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Classroom Online Chat</title>
+  <title>Classroom Peer Chat & Share</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
@@ -12,12 +12,12 @@
     .login-box { background: white; padding: 25px; border-radius: 12px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; text-align: center; }
     .login-box h3 { color: #007bff; margin-bottom: 5px; }
     .login-box input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-    .ip-hint { font-size: 0.75rem; color: #666; text-align: left; margin-top: -8px; }
+    .hint { font-size: 0.75rem; color: #666; text-align: left; }
 
     .chat-container { width: 100%; max-width: 600px; height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
     .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
     .control-bar { display: flex; gap: 8px; padding: 10px; background: #e9ecef; border-bottom: 1px solid #ddd; align-items: center; }
-    .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
+    .control-bar input, .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
     .user-tag { font-weight: bold; color: #28a745; background: #e2f0d9; padding: 4px 8px; border-radius: 12px; }
     
     .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
@@ -33,33 +33,31 @@
     .btn:hover { background: #0056b3; }
     .file-label { cursor: pointer; padding: 8px 12px; background: #6c757d; color: white; border-radius: 20px; font-size: 0.85rem; }
   </style>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <!-- เรียกใช้ PeerJS Library สื่อสารแบบ P2P บน GitHub Pages -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
 <!-- หน้าต่างล็อกอิน -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
-    <h3>เข้าสู่ระบบแชท</h3>
-    <input type="text" id="nicknameInput" placeholder="ระบุชื่อเล่นของคุณ..." required>
-    <input type="text" id="serverIpInput" placeholder="กำลังโหลด IP เครื่อง...">
-    <span class="ip-hint">*ระบบดึง IP ให้อัตโนมัติ (สามารถแก้ไขได้ถ้าต่อเครื่องอื่น)</span>
-    <button class="btn" onclick="connectServer()">เข้าสู่ห้องแชท</button>
+    <h3>เข้าสู่ระบบแชท (GitHub Pages)</h3>
+    <input type="text" id="nicknameInput" placeholder="ตั้งชื่อเล่นของคุณ (เช่น Benz)..." required>
+    <span class="hint">*รันได้ทันที ไม่ต้องใส่ IP และไม่ต้องรัน server.js</span>
+    <button class="btn" onclick="initPeer()">เข้าสู่ห้องแชท</button>
   </div>
 </div>
 
 <div class="chat-container">
-  <div class="chat-header">Classroom Online Chat</div>
+  <div class="chat-header">Classroom P2P Chat & File Transfer</div>
   
   <div class="control-bar">
     <span>ผู้ใช้: <span class="user-tag" id="myNickname">-</span></span>
     <select id="chatMode" onchange="togglePrivateInput()">
-      <option value="group">แชทกลุ่ม</option>
+      <option value="group">แชทกลุ่ม (ส่งหาทุกคนที่เชื่อมต่อ)</option>
       <option value="private">แชทเดี่ยว</option>
     </select>
-    <select id="targetUserSelect" style="display: none; flex: 1;">
-      <option value="">-- เลือกผู้รับ --</option>
-    </select>
+    <input type="text" id="targetPeerInput" placeholder="ใส่ชื่อเล่นเพื่อน..." style="display: none; width: 140px;">
   </div>
 
   <div class="chat-messages" id="chatBox"></div>
@@ -73,112 +71,117 @@
 </div>
 
 <script>
-  let socket = null;
+  let peer = null;
   let myName = '';
-  let serverUrl = '';
+  let connections = {}; // เก็บการเชื่อมต่อกับเพื่อนๆ
   let selectedFile = null;
 
-  // ดึง IP ของ Server มาใส่ช่องอินพุตอัตโนมัติทันทีที่เปิดหน้าเว็บ
-  window.addEventListener('DOMContentLoaded', async () => {
-    try {
-      const res = await fetch('/api/server-ip');
-      const data = await res.json();
-      document.getElementById('serverIpInput').value = `${data.ip}:3000`;
-    } catch (err) {
-      // ถ้าเปิดแบบไฟล์ตรงๆ ให้ใช้ Host ปัจจุบันแทน
-      document.getElementById('serverIpInput').value = window.location.host;
-    }
-  });
-
-  function connectServer() {
+  function initPeer() {
     myName = document.getElementById('nicknameInput').value.trim();
-    let ip = document.getElementById('serverIpInput').value.trim();
-
     if (!myName) return alert('กรุณาระบุชื่อเล่น');
-    if (!ip) ip = window.location.host;
 
-    serverUrl = ip.startsWith('http') ? ip : `http://${ip}`;
+    // สร้าง ID ของตัวเองจากชื่อเล่น (แปลงเป็นภาษาอังกฤษ/ตัวเลข ป้องกันบั๊ก)
+    const peerId = 'classroom-user-' + encodeURIComponent(myName);
 
-    socket = io(serverUrl);
+    // เชื่อมต่อกับ PeerServer กลางของระบบ WebRTC
+    peer = new Peer(peerId);
 
-    socket.on('connect', () => {
+    peer.on('open', (id) => {
       document.getElementById('loginOverlay').style.display = 'none';
       document.getElementById('myNickname').textContent = myName;
-      socket.emit('register', myName);
+      alert(`เข้าสู่ระบบสำเร็จ! ชื่อของคุณคือ: ${myName}`);
     });
 
-    socket.on('connect_error', () => {
-      alert('ไม่สามารถเชื่อมต่อ Server ได้ ตรวจสอบ IP หรือเช็กว่าเปิดไฟล์ server.js หรือยัง');
+    // รับการเชื่อมต่อจากคนอื่น
+    peer.on('connection', (conn) => {
+      setupConnection(conn);
     });
 
-    socket.on('online-users', (usersList) => {
-      const select = document.getElementById('targetUserSelect');
-      select.innerHTML = '<option value="">-- เลือกผู้รับ --</option>';
-      
-      usersList.forEach(user => {
-        if (user !== myName) {
-          const opt = document.createElement('option');
-          opt.value = user;
-          opt.textContent = user;
-          select.appendChild(opt);
-        }
-      });
+    peer.on('error', (err) => {
+      if (err.type === 'unavailable-id') {
+        alert('ชื่อเล่นนี้มีคนใช้แล้ว กรุณาเปลี่ยนชื่อเล่นใหม่');
+      } else {
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.type);
+      }
+    });
+  }
+
+  function setupConnection(conn) {
+    conn.on('open', () => {
+      connections[conn.peer] = conn;
     });
 
-    socket.on('receive-message', (data) => {
-      renderMessage(data, data.sender === myName);
+    // รับข้อมูลข้อความ หรือ ไฟล์
+    conn.on('data', (data) => {
+      renderMessage(data, false);
+    });
+
+    conn.on('close', () => {
+      delete connections[conn.peer];
     });
   }
 
   function togglePrivateInput() {
     const mode = document.getElementById('chatMode').value;
-    document.getElementById('targetUserSelect').style.display = mode === 'private' ? 'inline-block' : 'none';
+    document.getElementById('targetPeerInput').style.display = mode === 'private' ? 'inline-block' : 'none';
   }
 
   function handleFileSelect() {
     const file = document.getElementById('fileInput').files[0];
     if (file) {
       selectedFile = file;
-      alert(`เลือกไฟล์: ${file.name}`);
+      alert(`เลือกไฟล์: ${file.name} แล้ว (พร้อมส่ง)`);
     }
   }
 
   async function sendMessage() {
     const msgText = document.getElementById('messageInput').value.trim();
     const mode = document.getElementById('chatMode').value;
-    const target = document.getElementById('targetUserSelect').value;
+    const targetName = document.getElementById('targetPeerInput').value.trim();
 
-    if (mode === 'private' && !target) return alert('กรุณาเลือกผู้รับแชทเดี่ยว');
     if (!msgText && !selectedFile) return;
 
-    let fileData = null;
-
+    let filePayload = null;
     if (selectedFile) {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      try {
-        const res = await fetch(`${serverUrl}/upload`, { method: 'POST', body: formData });
-        const data = await res.json();
-        fileData = { name: data.fileName, url: `${serverUrl}${data.fileUrl}` };
-      } catch (err) {
-        alert('อัปโหลดไฟล์ไม่สำเร็จ');
-        return;
-      }
+      const buffer = await selectedFile.arrayBuffer();
+      filePayload = {
+        name: selectedFile.name,
+        type: selectedFile.type,
+        fileData: buffer
+      };
     }
 
     const payload = {
       sender: myName,
       text: msgText,
-      file: fileData,
-      target: target,
+      file: filePayload,
+      type: mode,
+      target: targetName,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    if (mode === 'group') {
-      socket.emit('send-group', payload);
+    if (mode === 'private') {
+      if (!targetName) return alert('กรุณาพิมพ์ชื่อเล่นของผู้รับ');
+      const targetPeerId = 'classroom-user-' + encodeURIComponent(targetName);
+      
+      // ถ้ายังไม่เคยต่อกับเพื่อนคนนี้ ให้ทักไปต่อก่อน
+      if (!connections[targetPeerId]) {
+        const conn = peer.connect(targetPeerId);
+        setupConnection(conn);
+        conn.on('open', () => {
+          conn.send(payload);
+          renderMessage(payload, true);
+        });
+      } else {
+        connections[targetPeerId].send(payload);
+        renderMessage(payload, true);
+      }
     } else {
-      socket.emit('send-private', payload);
+      // แชทกลุ่ม: ส่งกระจายหาทุกคนที่เคยเชื่อมต่ออยู่
+      Object.values(connections).forEach(conn => {
+        if (conn.open) conn.send(payload);
+      });
+      renderMessage(payload, true);
     }
 
     document.getElementById('messageInput').value = '';
@@ -191,13 +194,17 @@
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message', isMine ? 'mine' : 'others');
 
-    let modeBadge = data.type === 'private' ? `🔒 [ส่วนตัวถึง ${data.target}]` : '👥 [กลุ่ม]';
+    let modeBadge = data.type === 'private' ? `🔒 [ส่วนตัว]` : '👥 [กลุ่ม]';
     let contentHtml = `<div class="meta"><span>${data.sender} ${modeBadge}</span><span>${data.time}</span></div>`;
     
     if (data.text) contentHtml += `<div>${data.text}</div>`;
+    
+    // ถ้ามีไฟล์ แนบลิงก์สำหรับดาวน์โหลด
     if (data.file) {
+      const blob = new Blob([data.file.fileData], { type: data.file.type });
+      const fileUrl = URL.createObjectURL(blob);
       contentHtml += `<div style="margin-top: 5px;">
-        📁 <a href="${data.file.url}" target="_blank" download>${data.file.name}</a>
+        📁 <a href="${fileUrl}" download="${data.file.name}" target="_blank">${data.file.name}</a>
       </div>`;
     }
 
