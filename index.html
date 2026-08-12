@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Classroom Peer Chat & Share</title>
+  <title>Classroom Online Chat</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
@@ -12,12 +12,12 @@
     .login-box { background: white; padding: 25px; border-radius: 12px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; text-align: center; }
     .login-box h3 { color: #007bff; margin-bottom: 5px; }
     .login-box input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-    .hint { font-size: 0.75rem; color: #666; text-align: left; }
+    .hint { font-size: 0.75rem; color: #28a745; text-align: center; font-weight: bold; }
 
     .chat-container { width: 100%; max-width: 600px; height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
     .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
     .control-bar { display: flex; gap: 8px; padding: 10px; background: #e9ecef; border-bottom: 1px solid #ddd; align-items: center; }
-    .control-bar input, .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
+    .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
     .user-tag { font-weight: bold; color: #28a745; background: #e2f0d9; padding: 4px 8px; border-radius: 12px; }
     
     .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
@@ -33,31 +33,35 @@
     .btn:hover { background: #0056b3; }
     .file-label { cursor: pointer; padding: 8px 12px; background: #6c757d; color: white; border-radius: 20px; font-size: 0.85rem; }
   </style>
-  <!-- เรียกใช้ PeerJS Library สื่อสารแบบ P2P บน GitHub Pages -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+  <!-- เรียกใช้ Firebase SDK ผ่าน CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-<!-- หน้าต่างล็อกอิน -->
+<!-- หน้าล็อกอิน -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
-    <h3>เข้าสู่ระบบแชท (GitHub Pages)</h3>
-    <input type="text" id="nicknameInput" placeholder="ตั้งชื่อเล่นของคุณ (เช่น Benz)..." required>
-    <span class="hint">*รันได้ทันที ไม่ต้องใส่ IP และไม่ต้องรัน server.js</span>
-    <button class="btn" onclick="initPeer()">เข้าสู่ห้องแชท</button>
+    <h3>เข้าสู่ระบบแชทออนไลน์</h3>
+    <input type="text" id="nicknameInput" placeholder="ใส่ชื่อเล่นของคุณ..." required>
+    <span class="hint">🌐 ระบบออนไลน์ 100% ผ่าน Cloud</span>
+    <button class="btn" onclick="login()">เข้าสู่ห้องแชท</button>
   </div>
 </div>
 
 <div class="chat-container">
-  <div class="chat-header">Classroom P2P Chat & File Transfer</div>
+  <div class="chat-header">Classroom Cloud Chat</div>
   
   <div class="control-bar">
-    <span>ผู้ใช้: <span class="user-tag" id="myNickname">-</span></span>
+    <span>คุณ: <span class="user-tag" id="myNickname">-</span></span>
     <select id="chatMode" onchange="togglePrivateInput()">
-      <option value="group">แชทกลุ่ม (ส่งหาทุกคนที่เชื่อมต่อ)</option>
+      <option value="group">แชทกลุ่ม</option>
       <option value="private">แชทเดี่ยว</option>
     </select>
-    <input type="text" id="targetPeerInput" placeholder="ใส่ชื่อเล่นเพื่อน..." style="display: none; width: 140px;">
+    <select id="targetUserSelect" style="display: none; flex: 1;">
+      <option value="">-- เลือกชื่อผู้รับ --</option>
+    </select>
   </div>
 
   <div class="chat-messages" id="chatBox"></div>
@@ -71,122 +75,107 @@
 </div>
 
 <script>
-  let peer = null;
+  // ตั้งค่าเชื่อมต่อ Firebase (ฐานข้อมูล Cloud ฟรีของ Google)
+  const firebaseConfig = {
+    databaseURL: "https://classroom-chat-demo-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  };
+  
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
   let myName = '';
-  let connections = {}; // เก็บการเชื่อมต่อกับเพื่อนๆ
-  let selectedFile = null;
+  let selectedFileBase64 = null;
+  let selectedFileName = '';
 
-  function initPeer() {
+  function login() {
     myName = document.getElementById('nicknameInput').value.trim();
-    if (!myName) return alert('กรุณาระบุชื่อเล่น');
+    if (!myName) return alert('กรุณาใส่ชื่อเล่น');
 
-    // สร้าง ID ของตัวเองจากชื่อเล่น (แปลงเป็นภาษาอังกฤษ/ตัวเลข ป้องกันบั๊ก)
-    const peerId = 'classroom-user-' + encodeURIComponent(myName);
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('myNickname').textContent = myName;
 
-    // เชื่อมต่อกับ PeerServer กลางของระบบ WebRTC
-    peer = new Peer(peerId);
+    // ลงทะเบียนคนออนไลน์
+    const userRef = db.ref('users/' + myName);
+    userRef.set({ name: myName, online: true });
+    userRef.onDisconnect().remove(); // ลบชื่อออกเมื่อปิดหน้าเว็บ
 
-    peer.on('open', (id) => {
-      document.getElementById('loginOverlay').style.display = 'none';
-      document.getElementById('myNickname').textContent = myName;
-      alert(`เข้าสู่ระบบสำเร็จ! ชื่อของคุณคือ: ${myName}`);
+    // ดึงรายชื่อคนที่อยู่ออนไลน์จริง
+    db.ref('users').on('value', (snapshot) => {
+      const users = snapshot.val() || {};
+      const select = document.getElementById('targetUserSelect');
+      select.innerHTML = '<option value="">-- เลือกชื่อผู้รับ --</option>';
+      
+      Object.keys(users).forEach(user => {
+        if (user !== myName) {
+          const opt = document.createElement('option');
+          opt.value = user;
+          opt.textContent = user;
+          select.appendChild(opt);
+        }
+      });
     });
 
-    // รับการเชื่อมต่อจากคนอื่น
-    peer.on('connection', (conn) => {
-      setupConnection(conn);
-    });
-
-    peer.on('error', (err) => {
-      if (err.type === 'unavailable-id') {
-        alert('ชื่อเล่นนี้มีคนใช้แล้ว กรุณาเปลี่ยนชื่อเล่นใหม่');
-      } else {
-        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.type);
+    // ฟังข้อความใหม่ที่เข้ามาในระบบ Cloud Realtime
+    db.ref('messages').on('child_added', (snapshot) => {
+      const data = snapshot.val();
+      
+      // กรองข้อความ: แสดงถ้าเป็นแชทกลุ่ม หรือ แชทเดี่ยวที่ส่งหาเรา/เราส่งเอง
+      if (data.mode === 'group' || data.sender === myName || data.target === myName) {
+        renderMessage(data, data.sender === myName);
       }
-    });
-  }
-
-  function setupConnection(conn) {
-    conn.on('open', () => {
-      connections[conn.peer] = conn;
-    });
-
-    // รับข้อมูลข้อความ หรือ ไฟล์
-    conn.on('data', (data) => {
-      renderMessage(data, false);
-    });
-
-    conn.on('close', () => {
-      delete connections[conn.peer];
     });
   }
 
   function togglePrivateInput() {
     const mode = document.getElementById('chatMode').value;
-    document.getElementById('targetPeerInput').style.display = mode === 'private' ? 'inline-block' : 'none';
+    document.getElementById('targetUserSelect').style.display = mode === 'private' ? 'inline-block' : 'none';
   }
 
+  // อ่านไฟล์แปลงเป็น Base64 ส่งเข้า Cloud
   function handleFileSelect() {
     const file = document.getElementById('fileInput').files[0];
     if (file) {
-      selectedFile = file;
-      alert(`เลือกไฟล์: ${file.name} แล้ว (พร้อมส่ง)`);
+      if (file.size > 3 * 1024 * 1024) { // จำกัดขนาดไฟล์ไม่เกิน 3MB
+        alert('กรุณาเลือกไฟล์ขนาดไม่เกิน 3MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedFileBase64 = e.target.result;
+        selectedFileName = file.name;
+        alert(`เลือกไฟล์: ${file.name} แล้ว`);
+      };
+      reader.readAsDataURL(file);
     }
   }
 
-  async function sendMessage() {
+  function sendMessage() {
     const msgText = document.getElementById('messageInput').value.trim();
     const mode = document.getElementById('chatMode').value;
-    const targetName = document.getElementById('targetPeerInput').value.trim();
+    const target = document.getElementById('targetUserSelect').value;
 
-    if (!msgText && !selectedFile) return;
+    if (mode === 'private' && !target) return alert('กรุณาเลือกผู้รับแชทเดี่ยว');
+    if (!msgText && !selectedFileBase64) return;
 
-    let filePayload = null;
-    if (selectedFile) {
-      const buffer = await selectedFile.arrayBuffer();
-      filePayload = {
-        name: selectedFile.name,
-        type: selectedFile.type,
-        fileData: buffer
-      };
+    let fileData = null;
+    if (selectedFileBase64) {
+      fileData = { name: selectedFileName, data: selectedFileBase64 };
     }
 
-    const payload = {
+    // บันทึกลง Cloud
+    db.ref('messages').push({
       sender: myName,
       text: msgText,
-      file: filePayload,
-      type: mode,
-      target: targetName,
+      file: fileData,
+      mode: mode,
+      target: target,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    if (mode === 'private') {
-      if (!targetName) return alert('กรุณาพิมพ์ชื่อเล่นของผู้รับ');
-      const targetPeerId = 'classroom-user-' + encodeURIComponent(targetName);
-      
-      // ถ้ายังไม่เคยต่อกับเพื่อนคนนี้ ให้ทักไปต่อก่อน
-      if (!connections[targetPeerId]) {
-        const conn = peer.connect(targetPeerId);
-        setupConnection(conn);
-        conn.on('open', () => {
-          conn.send(payload);
-          renderMessage(payload, true);
-        });
-      } else {
-        connections[targetPeerId].send(payload);
-        renderMessage(payload, true);
-      }
-    } else {
-      // แชทกลุ่ม: ส่งกระจายหาทุกคนที่เคยเชื่อมต่ออยู่
-      Object.values(connections).forEach(conn => {
-        if (conn.open) conn.send(payload);
-      });
-      renderMessage(payload, true);
-    }
+    });
 
     document.getElementById('messageInput').value = '';
     document.getElementById('fileInput').value = '';
-    selectedFile = null;
+    selectedFileBase64 = null;
+    selectedFileName = '';
   }
 
   function renderMessage(data, isMine) {
@@ -194,17 +183,14 @@
     const msgDiv = document.createElement('div');
     msgDiv.classList.add('message', isMine ? 'mine' : 'others');
 
-    let modeBadge = data.type === 'private' ? `🔒 [ส่วนตัว]` : '👥 [กลุ่ม]';
+    let modeBadge = data.mode === 'private' ? `🔒 [ส่วนตัว]` : '👥 [กลุ่ม]';
     let contentHtml = `<div class="meta"><span>${data.sender} ${modeBadge}</span><span>${data.time}</span></div>`;
     
     if (data.text) contentHtml += `<div>${data.text}</div>`;
     
-    // ถ้ามีไฟล์ แนบลิงก์สำหรับดาวน์โหลด
     if (data.file) {
-      const blob = new Blob([data.file.fileData], { type: data.file.type });
-      const fileUrl = URL.createObjectURL(blob);
       contentHtml += `<div style="margin-top: 5px;">
-        📁 <a href="${fileUrl}" download="${data.file.name}" target="_blank">${data.file.name}</a>
+        📁 <a href="${data.file.data}" download="${data.file.name}" target="_blank">${data.file.name}</a>
       </div>`;
     }
 
