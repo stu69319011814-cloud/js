@@ -18,18 +18,17 @@
   *{box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;}
   body{background:linear-gradient(160deg,#eef1f8,#dfe6fb);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:12px;}
 
-  /* ---------- overlays ---------- */
+  /* Overlays & Cards */
   .overlay{position:fixed;inset:0;background:rgba(20,25,50,.55);display:flex;justify-content:center;align-items:center;z-index:999;padding:16px;}
-  .card{background:#fff;padding:28px 26px;border-radius:20px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:12px;text-align:center;}
+  .card{background:#fff;padding:28px 26px;border-radius:20px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:12px;text-align:center;position:relative;}
   .card h3{color:var(--primary-dark);font-size:1.25rem;}
   .card input,.card textarea{padding:11px 12px;border:1px solid #d7dbea;border-radius:10px;outline:none;font-size:.95rem;}
   .card input:focus,.card textarea:focus{border-color:var(--primary);}
   .hint{font-size:.75rem;color:var(--success);font-weight:600;}
   .link-btn{background:none;border:none;color:var(--primary);font-size:.8rem;cursor:pointer;text-decoration:underline;margin-top:2px;}
   .row{display:flex;gap:8px;}
-  .row .btn{flex:1;}
 
-  /* ---------- main chat ---------- */
+  /* Main Chat Layout */
   .chat-container{width:100%;max-width:640px;height:92vh;background:#fff;border-radius:22px;box-shadow:0 12px 34px rgba(30,40,90,.18);display:flex;flex-direction:column;overflow:hidden;}
   .chat-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;}
   .chat-header .title{font-size:1.15rem;font-weight:700;}
@@ -51,21 +50,17 @@
   .message.system{align-self:center;background:#fff3cd;color:#8a6300;font-size:.8rem;font-weight:600;border-radius:20px;}
   .message .meta{font-size:.72rem;opacity:.75;margin-bottom:4px;display:flex;justify-content:space-between;gap:14px;}
   .message a{color:inherit;font-weight:700;text-decoration:underline;}
-  .badge-tiny{font-size:.68rem;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.08);margin-left:4px;}
+  .badge-tiny{font-size:.68rem;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.15);margin-left:4px;}
 
   .chat-input{display:flex;gap:8px;padding:12px 14px;background:#fff;border-top:1px solid #e7e9f3;align-items:center;}
   .chat-input input[type="text"]{flex:1;padding:11px 14px;border:1px solid #d7dbea;border-radius:22px;outline:none;font-size:.92rem;}
   .chat-input input[type="text"]:focus{border-color:var(--primary);}
   .btn{padding:10px 18px;border:none;background:var(--primary);color:#fff;border-radius:22px;cursor:pointer;font-weight:700;font-size:.88rem;transition:.15s;}
   .btn:hover{background:var(--primary-dark);}
-  .btn.danger{background:var(--danger);}
-  .btn.danger:hover{background:#c73438;}
-  .btn.success{background:var(--success);}
   .file-label{cursor:pointer;padding:9px 12px;background:#6c7688;color:#fff;border-radius:20px;font-size:.8rem;font-weight:600;}
-  .file-label:hover{background:#575f6f;}
   .selected-file{font-size:.72rem;color:var(--primary-dark);padding:0 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-  /* ---------- admin panel ---------- */
+  /* Admin Panel & Modals */
   .admin-panel{width:100%;max-width:480px;max-height:80vh;overflow-y:auto;text-align:left;}
   .admin-panel h3{color:var(--primary-dark);margin-bottom:6px;}
   .section-title{font-weight:700;color:#333;margin:14px 0 6px;font-size:.95rem;border-bottom:2px solid #eef1f8;padding-bottom:4px;}
@@ -77,68 +72,62 @@
   .report-actions button{flex:1;padding:6px;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;}
   .user-item{flex-direction:row;justify-content:space-between;align-items:center;}
   .close-x{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.3rem;color:#999;cursor:pointer;}
-  .card.admin-panel{position:relative;}
+  .close-x:hover{color:#333;}
   .empty-note{font-size:.8rem;color:#999;text-align:center;padding:10px 0;}
-
-  /* notif badge on admin button */
   .notif-badge{background:var(--danger);color:#fff;font-size:.65rem;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:4px;}
 
-  /* toast */
+  /* Toast & Banner */
   .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:#2b2f3a;color:#fff;padding:10px 18px;border-radius:12px;font-size:.85rem;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:1500;opacity:0;transition:.25s;pointer-events:none;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-  /* pinned banner */
   .pinned-banner{background:#fff3cd;color:#8a6300;font-size:.8rem;font-weight:600;padding:8px 16px;text-align:center;border-bottom:1px solid #ffe4a1;display:none;}
 
-  /* admin settings form */
   .settings-form label{font-size:.78rem;color:#555;font-weight:600;display:block;margin:8px 0 4px;text-align:left;}
-  .settings-form input[type="text"],.settings-form textarea{width:100%;padding:9px 10px;border:1px solid #d7dbea;border-radius:8px;font-size:.85rem;font-family:monospace;}
+  .settings-form input[type="text"],.settings-form textarea{width:100%;padding:9px 10px;border:1px solid #d7dbea;border-radius:8px;font-size:.85rem;}
   .settings-form input[type="color"]{width:44px;height:34px;border:1px solid #d7dbea;border-radius:8px;padding:2px;cursor:pointer;}
-  .security-note{font-size:.72rem;color:#999;margin-top:6px;line-height:1.4;text-align:left;}
-
-  /* responsive */
-  @media (max-width:480px){
-    .chat-container{height:96vh;border-radius:14px;}
-    .message{max-width:86%;}
-  }
 </style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
+<!-- Firebase SDK Compat -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 </head>
 <body>
 
-<!-- ===== หน้าล็อกอิน ===== -->
+<!-- หน้าล็อกอิน -->
 <div class="overlay" id="loginOverlay">
-  <div class="card" id="loginCard">
+  <div class="card">
     <h3>เข้าสู่ระบบแชทออนไลน์</h3>
-    <input type="text" id="nicknameInput" placeholder="ใส่ชื่อเล่นของคุณ..." maxlength="20">
-    <input type="password" id="adminPassInput" placeholder="รหัสแอดมิน (ถ้ามี)" style="display:none;">
-    <span class="hint">🌐 ระบบออนไลน์ผ่าน Cloud • เก็บประวัติแชททั้งหมด</span>
+    <input type="text" id="nicknameInput" placeholder="ใส่ชื่อเล่นของคุณ..." maxlength="20" onkeypress="if(event.key==='Enter'){login();}">
+    <input type="password" id="adminPassInput" placeholder="รหัสแอดมิน" style="display:none;" onkeypress="if(event.key==='Enter'){login();}">
+    <span class="hint">🌐 ระบบ Real-time • ไฟล์อัปโหลดผ่าน Cloud Storage</span>
     <button class="btn" id="loginBtn" onclick="login()">เข้าสู่ห้องแชท</button>
-    <button class="link-btn" id="toggleAdminBtn" onclick="toggleAdminField()">เข้าสู่ระบบในฐานะแอดมิน</button>
+    <button class="link-btn" onclick="toggleAdminField()">เข้าสู่ระบบในฐานะแอดมิน</button>
   </div>
 </div>
 
-<!-- ===== หน้าต่างรายงานปัญหา ===== -->
-<div class="overlay" id="reportOverlay" style="display:none;">
+<!-- หน้าต่างรายงานปัญหา -->
+<div class="overlay" id="reportOverlay" style="display:none;" onclick="if(event.target===this) closeModal('reportOverlay')">
   <div class="card">
     <button class="close-x" onclick="closeModal('reportOverlay')">&times;</button>
     <h3>🐞 รายงานปัญหา / ขอฟีเจอร์</h3>
-    <textarea id="reportText" rows="4" placeholder="อธิบายปัญหาที่พบ หรือสิ่งที่ต้องการให้เพิ่ม..."></textarea>
-    <button class="btn" onclick="submitReport()">ส่งรายงานถึงแอดมิน</button>
+    <textarea id="reportText" rows="4" placeholder="อธิบายปัญหาที่พบ... (กด Enter เพื่อส่ง / Shift+Enter ขึ้นบรรทัดใหม่)" onkeydown="handleReportEnter(event)"></textarea>
+    <div class="row">
+      <button class="btn" style="background:#6c7688; flex:1;" onclick="closeModal('reportOverlay')">ยกเลิก</button>
+      <button class="btn" style="flex:1;" onclick="submitReport()">ส่งรายงาน</button>
+    </div>
   </div>
 </div>
 
-<!-- ===== แผงควบคุมแอดมิน ===== -->
-<div class="overlay" id="adminOverlay" style="display:none;">
+<!-- แผงควบคุมแอดมิน -->
+<div class="overlay" id="adminOverlay" style="display:none;" onclick="if(event.target===this) closeModal('adminOverlay')">
   <div class="card admin-panel">
     <button class="close-x" onclick="closeModal('adminOverlay')">&times;</button>
     <h3>🛠 แผงควบคุมแอดมิน</h3>
 
     <div class="section-title">📣 ส่งประกาศถึงทุกคน</div>
     <div class="row">
-      <input type="text" id="announceInput" placeholder="พิมพ์ประกาศ...">
+      <input type="text" id="announceInput" placeholder="พิมพ์ประกาศ..." onkeypress="if(event.key==='Enter'){sendAnnouncement();}">
       <button class="btn" style="flex:0 0 auto" onclick="sendAnnouncement()">ส่ง</button>
     </div>
 
@@ -148,31 +137,22 @@
     <div class="section-title">📋 รายงานปัญหาที่ได้รับ</div>
     <div id="reportList"></div>
 
-    <div class="section-title">🎨 ปรับแต่งหน้าเว็บแบบสด (ทุกคนเห็นทันที)</div>
+    <div class="section-title">🎨 ปรับแต่งหน้าเว็บแบบสด</div>
     <div class="settings-form">
-      <label>ชื่อห้องแชท (แทน "Classroom Cloud Chat")</label>
+      <label>ชื่อห้องแชท</label>
       <input type="text" id="settingTitle" maxlength="40" placeholder="Classroom Cloud Chat">
-
-      <label>ข้อความประกาศปักหมุด (เว้นว่าง = ไม่แสดง)</label>
-      <input type="text" id="settingBanner" maxlength="120" placeholder="เช่น วันนี้เรียนชดเชยห้อง 3...">
-
+      <label>ข้อความประกาศปักหมุด</label>
+      <input type="text" id="settingBanner" maxlength="120" placeholder="เช่น วันนี้เรียนชดเชย...">
       <label>สีหลักของธีม</label>
       <input type="color" id="settingColor" value="#4b6ef5">
-
-      <label>Custom CSS (สำหรับผู้ที่เข้าใจ CSS)</label>
-      <textarea id="settingCss" rows="4" placeholder=".chat-header{ ... }"></textarea>
-
+      <label>Custom CSS</label>
+      <textarea id="settingCss" rows="3" placeholder=".chat-header{ background: red; }"></textarea>
       <button class="btn" style="margin-top:10px;width:100%;" onclick="saveSettings()">💾 บันทึกและใช้งานทันที</button>
-      <div class="security-note">
-        ⚠️ ช่องนี้แก้ "รูปลักษณ์" ของหน้าเว็บแบบสดสำหรับทุกคนที่ออนไลน์อยู่ (ผ่าน Firebase) — ไม่ใช่การแก้โค้ด JavaScript ของระบบโดยตรง
-        เพราะการอนุญาตให้รันโค้ด/สคริปต์ที่ส่งผลกับทุกคนจากหน้าเว็บมีความเสี่ยงด้านความปลอดภัยสูง (รหัสแอดมินฝั่ง client ถูกดูได้จาก view-source)
-        หากต้องการแก้ไขโครงสร้างหรือฟังก์ชันการทำงานจริง ๆ ต้องแก้ที่ไฟล์ .html แล้วอัปโหลดใหม่
-      </div>
     </div>
   </div>
 </div>
 
-<!-- ===== ห้องแชทหลัก ===== -->
+<!-- ห้องแชทหลัก -->
 <div class="chat-container" id="chatContainer" style="display:none;">
   <div class="chat-header">
     <div>
@@ -202,82 +182,72 @@
     <label for="fileInput" class="file-label">📎</label>
     <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelect()">
     <span class="selected-file" id="selectedFileLabel"></span>
-    <input type="text" id="messageInput" placeholder="พิมพ์ข้อความที่นี่แล้วกด Enter..." onkeypress="if(event.key==='Enter'){sendMessage();}">
-    <button class="btn" onclick="sendMessage()">ส่ง</button>
+    <input type="text" id="messageInput" placeholder="พิมพ์ข้อความ..." onkeypress="if(event.key==='Enter'){sendMessage();}">
+    <button class="btn" id="sendBtn" onclick="sendMessage()">ส่ง</button>
   </div>
 </div>
 
 <script>
-/* =========================================================================
-   ตั้งค่า Firebase
-   ⚠️ ต้องเปลี่ยนเป็นโปรเจกต์ Firebase ของคุณเอง (ดูคำอธิบายท้ายไฟล์)
-   ========================================================================= */
+/* ⚠️ อัปเดตค่าจาก Firebase ของคุณเรียบร้อยแล้ว */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app/",
-  projectId: "YOUR_PROJECT"
+  apiKey: "AIzaSyC9emUQgRfiMmFML272Ue2rLimj6g3B4q8",
+  authDomain: "kkkk-c0436.firebaseapp.com",
+  projectId: "kkkk-c0436",
+  storageBucket: "kkkk-c0436.firebasestorage.app",
+  messagingSenderId: "268898744682",
+  appId: "1:268898744682:web:32c774a6f36c081b448d13",
+  measurementId: "G-NNSB108BRQ",
+  databaseURL: "https://kkkk-c0436-default-rtdb.firebaseio.com"
 };
 
-const ADMIN_PASSWORD = "admin1234"; // ⚠️ เปลี่ยนรหัสนี้ก่อนใช้งานจริง (ดูคำเตือนด้านล่าง)
+const ADMIN_PASSWORD = "admin1234"; // รหัสแอดมิน
 
-/* ประกาศตัวแปรสถานะทั้งหมดไว้บนสุด ก่อนโค้ดที่อาจเกิด error
-   เพื่อไม่ให้ปุ่ม/ฟังก์ชันอื่น ๆ พังไปด้วยหาก Firebase โหลดไม่สำเร็จ */
-var myName = '';
-var isAdmin = false;
-var selectedFileBase64 = null;
-var selectedFileName = '';
-var onlineUsersCache = {};
-var reportsCache = {};
-var db = null;
-var firebaseReady = false;
-var adminPanelOpen = false;
-var knownReportKeys = [];
+var myName = '', myUid = '', isAdmin = false;
+var selectedFile = null, onlineUsersCache = {}, reportsCache = {}, db = null, storage = null, auth = null;
+
+// ตั้งค่า Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  storage = firebase.storage();
+  auth = firebase.auth();
+} catch (err) {
+  alert('ไม่สามารถเชื่อมต่อ Firebase ได้: ' + err.message);
+}
+
+// กดปุ่ม Esc บนคีย์บอร์ดเพื่อปิดป๊อบอัพทั้งหมด
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeModal('reportOverlay');
+    closeModal('adminOverlay');
+  }
+});
+
+function handleReportEnter(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    submitReport();
+  }
+}
 
 function showToast(msg){
   const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
+  t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add('show'));
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
 }
 
-try {
-  if (typeof firebase === 'undefined') {
-    throw new Error('Firebase SDK ไม่ถูกโหลด (สคริปต์จาก CDN โหลดไม่สำเร็จ)');
-  }
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-  firebaseReady = true;
-} catch (err) {
-  console.error('Firebase init failed:', err);
-  showFatalError('ไม่สามารถเชื่อมต่อกับ Firebase ได้ กรุณาตรวจสอบว่าได้ใส่ค่า firebaseConfig ของโปรเจกต์ตัวเองแล้ว และตรวจสอบการเชื่อมต่ออินเทอร์เน็ต (' + err.message + ')');
-}
-
-function showFatalError(msg){
-  const box = document.createElement('div');
-  box.style = 'position:fixed;top:0;left:0;width:100%;background:#e5484d;color:#fff;padding:12px 16px;text-align:center;font-size:.85rem;font-weight:600;z-index:2000;';
-  box.textContent = '⚠️ ' + msg;
-  document.body.appendChild(box);
-  const loginBtn = document.getElementById('loginBtn');
-  if (loginBtn) { loginBtn.disabled = true; loginBtn.style.opacity = .5; loginBtn.style.cursor = 'not-allowed'; }
-}
-
-/* ---------------- helper: ป้องกัน XSS ---------------- */
 function escapeHtml(str){
-  if(!str) return '';
-  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return str ? str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) : '';
 }
 
-/* ---------------- login / admin toggle ---------------- */
 function toggleAdminField(){
   const el = document.getElementById('adminPassInput');
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-function login(){
-  if (!firebaseReady) return alert('ระบบยังเชื่อมต่อ Firebase ไม่ได้ กรุณาตรวจสอบการตั้งค่าก่อน');
+async function login(){
   const name = document.getElementById('nicknameInput').value.trim();
   const adminPass = document.getElementById('adminPassInput').value;
 
@@ -287,82 +257,66 @@ function login(){
     isAdmin = true;
   }
 
-  myName = name;
-  document.getElementById('loginOverlay').style.display = 'none';
-  document.getElementById('chatContainer').style.display = 'flex';
-  document.getElementById('myNicknameTag').textContent = myName + (isAdmin ? ' 🛠' : '');
-  if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-block';
+  try {
+    const userCredential = await auth.signInAnonymously();
+    myUid = userCredential.user.uid;
+    myName = name;
 
-  // ลงทะเบียนผู้ใช้ออนไลน์ + ลบอัตโนมัติเมื่อปิดหน้า
-  const userRef = db.ref('users/' + safeKey(myName));
-  userRef.set({ name: myName, admin: isAdmin, joinedAt: Date.now() });
-  userRef.onDisconnect().remove();
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('chatContainer').style.display = 'flex';
+    document.getElementById('myNicknameTag').textContent = myName + (isAdmin ? ' 🛠' : '');
+    if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-block';
 
-  // รายชื่อผู้ใช้ออนไลน์ (real-time)
+    const userRef = db.ref('users/' + myUid);
+    userRef.set({ name: myName, uid: myUid, admin: isAdmin, joinedAt: Date.now() });
+    userRef.onDisconnect().remove();
+
+    initRealtimeListeners();
+  } catch (error) {
+    alert('เข้าสู่ระบบไม่สำเร็จ: ' + error.message + '\n(โปรดแน่ใจว่าเปิดใช้งาน Anonymous Auth ใน Firebase Console แล้ว)');
+  }
+}
+
+function initRealtimeListeners(){
   db.ref('users').on('value', (snapshot) => {
     const users = snapshot.val() || {};
     onlineUsersCache = users;
     renderTargetSelect(users);
-    document.getElementById('onlineCount').textContent = Object.keys(users).length;
-    document.getElementById('onlineCountAdmin').textContent = Object.keys(users).length;
+    const count = Object.keys(users).length;
+    document.getElementById('onlineCount').textContent = count;
+    document.getElementById('onlineCountAdmin').textContent = count;
     if (isAdmin) renderUserList(users);
   });
 
-  // โหลดประวัติแชททั้งหมด + รับข้อความใหม่แบบ real-time
   db.ref('messages').on('child_added', (snapshot) => {
     const data = snapshot.val();
-    if (data.mode === 'group' || data.sender === myName || data.target === myName) {
-      renderMessage(data, data.sender === myName);
+    if (data.mode === 'group' || data.senderUid === myUid || data.targetUid === myUid) {
+      renderMessage(data, data.senderUid === myUid);
     }
-  }, (err) => {
-    console.error('messages listener error:', err);
-    showToast('⚠️ อ่านข้อความไม่ได้ (ตรวจสอบ Firebase Rules): ' + err.message);
   });
 
-  // ตั้งค่าหน้าเว็บแบบสด (ใช้กับทุกคนที่ออนไลน์)
   db.ref('settings').on('value', (snapshot) => {
     applySettings(snapshot.val() || {});
   });
 
-  // แอดมิน: ฟังรายงานปัญหาที่เข้ามา
   if (isAdmin){
     db.ref('reports').on('value', (snapshot) => {
-      const newData = snapshot.val() || {};
-      const newKeys = Object.keys(newData);
-      const addedKeys = newKeys.filter(k => knownReportKeys.indexOf(k) === -1);
-
-      reportsCache = newData;
-      knownReportKeys = newKeys;
+      reportsCache = snapshot.val() || {};
       renderReportList();
-
-      const openCount = newKeys.filter(k => newData[k].status !== 'resolved').length;
+      const openCount = Object.values(reportsCache).filter(r => r.status !== 'resolved').length;
       updateReportBadge(openCount);
-
-      addedKeys.forEach(k => {
-        if (!adminPanelOpen) {
-          showToast('🐞 มีรายงานปัญหาใหม่จาก ' + newData[k].user);
-        }
-      });
-    }, (err) => {
-      console.error('reports listener error:', err);
-      showToast('⚠️ ไม่สามารถอ่านรายงานปัญหาได้ กรุณาตรวจสอบ Firebase Database Rules ว่าอนุญาต read บนเส้นทาง "reports" (' + err.message + ')');
     });
   }
 }
 
-function safeKey(name){
-  return name.replace(/[.#$/\[\]]/g, '_');
-}
-
-/* ---------------- private chat target list ---------------- */
 function renderTargetSelect(users){
   const select = document.getElementById('targetUserSelect');
   const current = select.value;
   select.innerHTML = '<option value="">-- เลือกผู้รับ --</option>';
   Object.values(users).forEach(u => {
-    if (u.name !== myName) {
+    if (u.uid !== myUid) {
       const opt = document.createElement('option');
-      opt.value = u.name;
+      opt.value = u.uid;
       opt.textContent = u.name + (u.admin ? ' 🛠' : '');
       select.appendChild(opt);
     }
@@ -375,57 +329,64 @@ function togglePrivateInput(){
   document.getElementById('targetUserSelect').style.display = mode === 'private' ? 'inline-block' : 'none';
 }
 
-/* ---------------- file attach ---------------- */
 function handleFileSelect(){
   const file = document.getElementById('fileInput').files[0];
   if (!file) return;
-  if (file.size > 3 * 1024 * 1024) {
-    alert('กรุณาเลือกไฟล์ขนาดไม่เกิน 3MB');
+  if (file.size > 10 * 1024 * 1024) {
+    alert('กรุณาเลือกไฟล์ขนาดไม่เกิน 10MB');
     document.getElementById('fileInput').value = '';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    selectedFileBase64 = e.target.result;
-    selectedFileName = file.name;
-    document.getElementById('selectedFileLabel').textContent = '📁 ' + file.name;
-  };
-  reader.readAsDataURL(file);
+  selectedFile = file;
+  document.getElementById('selectedFileLabel').textContent = '📁 ' + file.name;
 }
 
-/* ---------------- send message ---------------- */
-function sendMessage(){
+async function sendMessage(){
   const input = document.getElementById('messageInput');
   const msgText = input.value.trim();
   const mode = document.getElementById('chatMode').value;
-  const target = document.getElementById('targetUserSelect').value;
+  const targetUid = document.getElementById('targetUserSelect').value;
+  const sendBtn = document.getElementById('sendBtn');
 
-  if (mode === 'private' && !target) { alert('กรุณาเลือกผู้รับแชทเดี่ยว'); return; }
-  if (!msgText && !selectedFileBase64) return;
+  if (mode === 'private' && !targetUid) return alert('กรุณาเลือกผู้รับแชทเดี่ยว');
+  if (!msgText && !selectedFile) return;
 
+  sendBtn.disabled = true;
   let fileData = null;
-  if (selectedFileBase64) fileData = { name: selectedFileName, data: selectedFileBase64 };
 
-  db.ref('messages').push({
-    sender: myName,
-    isAdmin: isAdmin,
-    text: msgText,
-    file: fileData,
-    mode: mode,
-    target: target,
-    time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-    ts: Date.now()
-  });
+  try {
+    if (selectedFile) {
+      document.getElementById('selectedFileLabel').textContent = '⏳ กำลังอัปโหลด...';
+      const fileRef = storage.ref('uploads/' + Date.now() + '_' + selectedFile.name);
+      const snapshot = await fileRef.put(selectedFile);
+      const downloadURL = await snapshot.ref.getDownloadURL();
+      fileData = { name: selectedFile.name, url: downloadURL };
+    }
 
-  input.value = '';
-  document.getElementById('fileInput').value = '';
-  document.getElementById('selectedFileLabel').textContent = '';
-  selectedFileBase64 = null;
-  selectedFileName = '';
-  input.focus();
+    await db.ref('messages').push({
+      sender: myName,
+      senderUid: myUid,
+      isAdmin: isAdmin,
+      text: msgText,
+      file: fileData,
+      mode: mode,
+      targetUid: targetUid || null,
+      time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+      ts: Date.now()
+    });
+
+    input.value = '';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('selectedFileLabel').textContent = '';
+    selectedFile = null;
+  } catch (err) {
+    alert('ส่งข้อความไม่สำเร็จ: ' + err.message);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
 }
 
-/* ---------------- render chat bubble ---------------- */
 function renderMessage(data, isMine){
   const chatBox = document.getElementById('chatBox');
   const msgDiv = document.createElement('div');
@@ -445,19 +406,19 @@ function renderMessage(data, isMine){
   let html = `<div class="meta"><span>${escapeHtml(data.sender)}${adminBadge} · ${modeBadge}</span><span>${escapeHtml(data.time)}</span></div>`;
   if (data.text) html += `<div>${escapeHtml(data.text)}</div>`;
   if (data.file) {
-    html += `<div style="margin-top:5px;">📁 <a href="${data.file.data}" download="${escapeHtml(data.file.name)}" target="_blank">${escapeHtml(data.file.name)}</a></div>`;
+    html += `<div style="margin-top:5px;">📁 <a href="${data.file.url}" download target="_blank">${escapeHtml(data.file.name)}</a></div>`;
   }
   msgDiv.innerHTML = html;
   chatBox.appendChild(msgDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-/* ---------------- report issue (ทุกคนใช้ได้) ---------------- */
 function submitReport(){
   const text = document.getElementById('reportText').value.trim();
   if (!text) return alert('กรุณาพิมพ์รายละเอียดปัญหา');
   db.ref('reports').push({
     user: myName,
+    uid: myUid,
     text: text,
     status: 'open',
     ts: Date.now(),
@@ -465,33 +426,12 @@ function submitReport(){
   }).then(() => {
     document.getElementById('reportText').value = '';
     closeModal('reportOverlay');
-    alert('ส่งรายงานถึงแอดมินแล้ว ขอบคุณครับ/ค่ะ');
-  }).catch((err) => {
-    console.error('submitReport failed:', err);
-    alert('ส่งรายงานไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบ Firebase Database Rules ว่าอนุญาต write บนเส้นทาง "reports"');
+    showToast('ส่งรายงานถึงแอดมินเรียบร้อยแล้ว');
   });
 }
 
-/* ---------------- admin panel ---------------- */
 function openAdminPanel(){
-  adminPanelOpen = true;
-  updateReportBadge(0);
   renderReportList();
-  prefillSettingsForm();
-  openModal('adminOverlay');
-}
-
-function updateReportBadge(count){
-  const badge = document.getElementById('reportBadge');
-  if (count > 0){
-    badge.style.display = 'inline-block';
-    badge.textContent = count;
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-function prefillSettingsForm(){
   db.ref('settings').once('value').then(snap => {
     const s = snap.val() || {};
     document.getElementById('settingTitle').value = s.title || '';
@@ -499,6 +439,7 @@ function prefillSettingsForm(){
     document.getElementById('settingColor').value = s.color || '#4b6ef5';
     document.getElementById('settingCss').value = s.customCss || '';
   });
+  openModal('adminOverlay');
 }
 
 function saveSettings(){
@@ -508,16 +449,11 @@ function saveSettings(){
     color: document.getElementById('settingColor').value,
     customCss: document.getElementById('settingCss').value
   };
-  db.ref('settings').set(settings).then(() => {
-    showToast('✅ บันทึกและใช้งานทันทีแล้ว');
-  }).catch(err => {
-    alert('บันทึกไม่สำเร็จ: ' + err.message);
-  });
+  db.ref('settings').set(settings).then(() => showToast('✅ บันทึกการตั้งค่าเรียบร้อยแล้ว'));
 }
 
 function applySettings(s){
   document.querySelector('.chat-header .title').textContent = s.title || 'Classroom Cloud Chat';
-
   const banner = document.getElementById('pinnedBanner');
   if (s.banner){ banner.textContent = '📌 ' + s.banner; banner.style.display = 'block'; }
   else { banner.style.display = 'none'; }
@@ -537,29 +473,19 @@ function applySettings(s){
   styleTag.textContent = s.customCss || '';
 }
 
-function closeAdminPanel(){ adminPanelOpen = false; closeModal('adminOverlay'); }
-
-function openModal(id){ document.getElementById(id).style.display = 'flex'; }
-function closeModal(id){
-  document.getElementById(id).style.display = 'none';
-  if (id === 'adminOverlay') adminPanelOpen = false;
-}
-
 function renderUserList(users){
   const container = document.getElementById('userList');
   container.innerHTML = '';
-  const keys = Object.keys(users);
-  if (keys.length === 0){ container.innerHTML = '<div class="empty-note">ยังไม่มีผู้ใช้ออนไลน์</div>'; return; }
-  keys.forEach(key => {
-    const u = users[key];
+  Object.keys(users).forEach(uid => {
+    const u = users[uid];
     const div = document.createElement('div');
     div.className = 'user-item';
     div.innerHTML = `<span>${escapeHtml(u.name)}${u.admin ? ' 🛠' : ''}</span>`;
-    if (u.name !== myName){
+    if (u.uid !== myUid){
       const btn = document.createElement('button');
-      btn.textContent = 'ลบออกจากรายชื่อ';
-      btn.style = 'padding:5px 8px;border:none;border-radius:8px;background:#ffe1e1;color:#c73438;font-size:.7rem;font-weight:600;cursor:pointer;';
-      btn.onclick = () => db.ref('users/' + key).remove();
+      btn.textContent = 'เตะออก';
+      btn.style = 'padding:4px 8px;border:none;border-radius:6px;background:#ffe1e1;color:#c73438;cursor:pointer;';
+      btn.onclick = () => db.ref('users/' + uid).remove();
       div.appendChild(btn);
     }
     container.appendChild(div);
@@ -569,49 +495,38 @@ function renderUserList(users){
 function renderReportList(){
   const container = document.getElementById('reportList');
   container.innerHTML = '';
-  const keys = Object.keys(reportsCache).sort((a,b) => (reportsCache[b].ts||0) - (reportsCache[a].ts||0));
-  if (keys.length === 0){ container.innerHTML = '<div class="empty-note">ยังไม่มีรายงานปัญหา</div>'; return; }
-  keys.forEach(key => {
+  Object.keys(reportsCache).forEach(key => {
     const r = reportsCache[key];
     const div = document.createElement('div');
     div.className = 'report-item' + (r.status === 'resolved' ? ' resolved' : '');
     div.innerHTML = `
       <div class="r-meta"><span>👤 ${escapeHtml(r.user)}</span><span>${escapeHtml(r.time || '')}</span></div>
       <div class="r-text">${escapeHtml(r.text)}</div>
-      <div class="report-actions"></div>`;
-    const actions = div.querySelector('.report-actions');
-
-    if (r.status !== 'resolved'){
-      const resolveBtn = document.createElement('button');
-      resolveBtn.textContent = '✅ แก้ไขแล้ว';
-      resolveBtn.style.background = '#d7f4e3'; resolveBtn.style.color = '#1f7a4d';
-      resolveBtn.onclick = () => db.ref('reports/' + key + '/status').set('resolved');
-      actions.appendChild(resolveBtn);
-    }
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑 ลบ';
-    delBtn.style.background = '#ffe1e1'; delBtn.style.color = '#c73438';
-    delBtn.onclick = () => db.ref('reports/' + key).remove();
-    actions.appendChild(delBtn);
-
+      <div class="report-actions">
+        ${r.status !== 'resolved' ? `<button style="background:#d7f4e3;color:#1f7a4d" onclick="db.ref('reports/${key}/status').set('resolved')">✅ แก้ไขแล้ว</button>` : ''}
+        <button style="background:#ffe1e1;color:#c73438" onclick="db.ref('reports/${key}').remove()">🗑 ลบ</button>
+      </div>`;
     container.appendChild(div);
   });
 }
 
 function sendAnnouncement(){
   const input = document.getElementById('announceInput');
-  const text = input.value.trim();
-  if (!text) return;
+  if (!input.value.trim()) return;
   db.ref('messages').push({
-    system: true,
-    mode: 'group',
-    text: text,
-    sender: 'ระบบ',
-    time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-    ts: Date.now()
+    system: true, mode: 'group', text: input.value.trim(), sender: 'ระบบ', time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), ts: Date.now()
   });
   input.value = '';
 }
+
+function updateReportBadge(count){
+  const badge = document.getElementById('reportBadge');
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+  badge.textContent = count;
+}
+
+function openModal(id){ document.getElementById(id).style.display = 'flex'; }
+function closeModal(id){ document.getElementById(id).style.display = 'none'; }
 </script>
 </body>
 </html>
