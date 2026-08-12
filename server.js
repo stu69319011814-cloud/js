@@ -4,13 +4,33 @@ const { Server } = require('socket.io');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
+const os = require('os'); // เรียกใช้งานระบบ Network ของเครื่อง
 
 const app = express();
-app.use(cors()); // รองรับการต่อข้าม IP/Domain
+app.use(cors());
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" }
+});
+
+// ฟังก์ชันหาเลข IP วงแลนปัจจุบันของเครื่อง Server
+function getServerIp() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      // ค้นหา IPv4 ที่ไม่ใช่ internal (127.0.0.1)
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+// สร้าง API ส่งค่า IP ให้หน้าเว็บ
+app.get('/api/server-ip', (req, res) => {
+  res.json({ ip: getServerIp() });
 });
 
 // ตั้งค่าอัปโหลดไฟล์
@@ -28,7 +48,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
   res.json({ fileUrl: `/uploads/${req.file.filename}`, fileName: req.file.originalname });
 });
 
-// เก็บรายชื่อผู้ใช้ออนไลน์ { socketId: username }
 const users = {};
 
 function broadcastOnlineUsers() {
@@ -37,31 +56,24 @@ function broadcastOnlineUsers() {
 }
 
 io.on('connection', (socket) => {
-  // เมื่อเข้าสู่ระบบด้วยชื่อเล่น
   socket.on('register', (username) => {
     socket.username = username;
     users[socket.id] = username;
-    broadcastOnlineUsers(); // แจ้งเตือนทุกคนว่ามีคนออนไลน์เพิ่ม
+    broadcastOnlineUsers();
   });
 
-  // ส่งข้อความกลุ่ม
   socket.on('send-group', (data) => {
     io.emit('receive-message', { ...data, type: 'group' });
   });
 
-  // ส่งข้อความเดี่ยว
   socket.on('send-private', (data) => {
-    // หา Socket ID ของผู้รับตามชื่อ
     const targetSocketId = Object.keys(users).find(id => users[id] === data.target);
-    
     if (targetSocketId) {
       io.to(targetSocketId).emit('receive-message', { ...data, type: 'private' });
-      // ส่งหาตัวเองด้วยเพื่อให้ขึ้นในหน้าจอ
       socket.emit('receive-message', { ...data, type: 'private' });
     }
   });
 
-  // เมื่อผู้ใช้ตัดการเชื่อมต่อ
   socket.on('disconnect', () => {
     delete users[socket.id];
     broadcastOnlineUsers();
@@ -71,4 +83,5 @@ io.on('connection', (socket) => {
 const PORT = 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Server IP: http://${getServerIp()}:${PORT}`);
 });
