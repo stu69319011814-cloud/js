@@ -8,20 +8,18 @@
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
     
-    /* Login Overlay */
     .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 999; }
     .login-box { background: white; padding: 25px; border-radius: 12px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; text-align: center; }
     .login-box h3 { color: #007bff; margin-bottom: 5px; }
     .login-box input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-    
-    /* Main Chat */
+    .ip-hint { font-size: 0.75rem; color: #666; text-align: left; margin-top: -8px; }
+
     .chat-container { width: 100%; max-width: 600px; height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
     .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
     .control-bar { display: flex; gap: 8px; padding: 10px; background: #e9ecef; border-bottom: 1px solid #ddd; align-items: center; }
     .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
     .user-tag { font-weight: bold; color: #28a745; background: #e2f0d9; padding: 4px 8px; border-radius: 12px; }
     
-    /* Messages Area */
     .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
     .message { max-width: 75%; padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; word-wrap: break-word; }
     .message.mine { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
@@ -29,7 +27,6 @@
     .message .meta { font-size: 0.75rem; opacity: 0.8; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
     .message a { color: inherit; font-weight: bold; text-decoration: underline; }
 
-    /* Input Area */
     .chat-input { display: flex; gap: 8px; padding: 12px; background: #fff; border-top: 1px solid #ddd; align-items: center; }
     .chat-input input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
     .btn { padding: 8px 16px; border: none; background: #007bff; color: white; border-radius: 20px; cursor: pointer; font-weight: bold; }
@@ -45,13 +42,14 @@
   <div class="login-box">
     <h3>เข้าสู่ระบบแชท</h3>
     <input type="text" id="nicknameInput" placeholder="ระบุชื่อเล่นของคุณ..." required>
-    <input type="text" id="serverIpInput" placeholder="IP เครื่อง Server (เช่น 192.168.1.50:3000)">
+    <input type="text" id="serverIpInput" placeholder="กำลังโหลด IP เครื่อง...">
+    <span class="ip-hint">*ระบบดึง IP ให้อัตโนมัติ (สามารถแก้ไขได้ถ้าต่อเครื่องอื่น)</span>
     <button class="btn" onclick="connectServer()">เข้าสู่ห้องแชท</button>
   </div>
 </div>
 
 <div class="chat-container">
-  <div class="chat-header">Classroom Chat & Share</div>
+  <div class="chat-header">Classroom Online Chat</div>
   
   <div class="control-bar">
     <span>ผู้ใช้: <span class="user-tag" id="myNickname">-</span></span>
@@ -59,7 +57,6 @@
       <option value="group">แชทกลุ่ม</option>
       <option value="private">แชทเดี่ยว</option>
     </select>
-    <!-- เปลี่ยนจาก Input เป็น Select รายชื่อคนที่อยู่ออนไลน์จริง -->
     <select id="targetUserSelect" style="display: none; flex: 1;">
       <option value="">-- เลือกผู้รับ --</option>
     </select>
@@ -81,20 +78,27 @@
   let serverUrl = '';
   let selectedFile = null;
 
+  // ดึง IP ของ Server มาใส่ช่องอินพุตอัตโนมัติทันทีที่เปิดหน้าเว็บ
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch('/api/server-ip');
+      const data = await res.json();
+      document.getElementById('serverIpInput').value = `${data.ip}:3000`;
+    } catch (err) {
+      // ถ้าเปิดแบบไฟล์ตรงๆ ให้ใช้ Host ปัจจุบันแทน
+      document.getElementById('serverIpInput').value = window.location.host;
+    }
+  });
+
   function connectServer() {
     myName = document.getElementById('nicknameInput').value.trim();
     let ip = document.getElementById('serverIpInput').value.trim();
 
     if (!myName) return alert('กรุณาระบุชื่อเล่น');
+    if (!ip) ip = window.location.host;
 
-    // ถ้าไม่กรอก IP ให้ใช้ Host ปัจจุบันที่เปิดหน้าเว็บอยู่
-    if (!ip) {
-      serverUrl = window.location.origin;
-    } else {
-      serverUrl = ip.startsWith('http') ? ip : `http://${ip}`;
-    }
+    serverUrl = ip.startsWith('http') ? ip : `http://${ip}`;
 
-    // เชื่อมต่อ Socket.IO ไปยัง IP ที่ระบุ
     socket = io(serverUrl);
 
     socket.on('connect', () => {
@@ -104,10 +108,9 @@
     });
 
     socket.on('connect_error', () => {
-      alert('ไม่สามารถเชื่อมต่อ Server ได้ ตรวจสอบ IP และ Port อีกครั้ง');
+      alert('ไม่สามารถเชื่อมต่อ Server ได้ ตรวจสอบ IP หรือเช็กว่าเปิดไฟล์ server.js หรือยัง');
     });
 
-    // อัปเดตรายชื่อออนไลน์ในดรอปดาวน์
     socket.on('online-users', (usersList) => {
       const select = document.getElementById('targetUserSelect');
       select.innerHTML = '<option value="">-- เลือกผู้รับ --</option>';
@@ -122,7 +125,6 @@
       });
     });
 
-    // รับข้อความ
     socket.on('receive-message', (data) => {
       renderMessage(data, data.sender === myName);
     });
@@ -151,7 +153,6 @@
 
     let fileData = null;
 
-    // ถ้ามีไฟล์ ให้อัปโหลดไปยัง Server
     if (selectedFile) {
       const formData = new FormData();
       formData.append('file', selectedFile);
