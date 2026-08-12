@@ -1,204 +1,617 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Classroom Online Chat</title>
-  <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-    body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    
-    .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 999; }
-    .login-box { background: white; padding: 25px; border-radius: 12px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 12px; text-align: center; }
-    .login-box h3 { color: #007bff; margin-bottom: 5px; }
-    .login-box input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-    .hint { font-size: 0.75rem; color: #28a745; text-align: center; font-weight: bold; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classroom Online Chat</title>
+<style>
+  :root{
+    --primary:#4b6ef5;
+    --primary-dark:#3453d1;
+    --bg:#eef1f8;
+    --bubble-mine:#4b6ef5;
+    --bubble-other:#ffffff;
+    --danger:#e5484d;
+    --success:#2fa86a;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:0;}
+  body{background:linear-gradient(160deg,#eef1f8,#dfe6fb);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:12px;}
 
-    .chat-container { width: 100%; max-width: 600px; height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
-    .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; }
-    .control-bar { display: flex; gap: 8px; padding: 10px; background: #e9ecef; border-bottom: 1px solid #ddd; align-items: center; }
-    .control-bar select, .control-bar span { padding: 6px; border-radius: 5px; font-size: 0.9rem; }
-    .user-tag { font-weight: bold; color: #28a745; background: #e2f0d9; padding: 4px 8px; border-radius: 12px; }
-    
-    .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
-    .message { max-width: 75%; padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; word-wrap: break-word; }
-    .message.mine { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-    .message.others { background: #e4e6eb; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
-    .message .meta { font-size: 0.75rem; opacity: 0.8; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
-    .message a { color: inherit; font-weight: bold; text-decoration: underline; }
+  /* ---------- overlays ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(20,25,50,.55);display:flex;justify-content:center;align-items:center;z-index:999;padding:16px;}
+  .card{background:#fff;padding:28px 26px;border-radius:20px;width:340px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:12px;text-align:center;}
+  .card h3{color:var(--primary-dark);font-size:1.25rem;}
+  .card input,.card textarea{padding:11px 12px;border:1px solid #d7dbea;border-radius:10px;outline:none;font-size:.95rem;}
+  .card input:focus,.card textarea:focus{border-color:var(--primary);}
+  .hint{font-size:.75rem;color:var(--success);font-weight:600;}
+  .link-btn{background:none;border:none;color:var(--primary);font-size:.8rem;cursor:pointer;text-decoration:underline;margin-top:2px;}
+  .row{display:flex;gap:8px;}
+  .row .btn{flex:1;}
 
-    .chat-input { display: flex; gap: 8px; padding: 12px; background: #fff; border-top: 1px solid #ddd; align-items: center; }
-    .chat-input input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
-    .btn { padding: 8px 16px; border: none; background: #007bff; color: white; border-radius: 20px; cursor: pointer; font-weight: bold; }
-    .btn:hover { background: #0056b3; }
-    .file-label { cursor: pointer; padding: 8px 12px; background: #6c757d; color: white; border-radius: 20px; font-size: 0.85rem; }
-  </style>
+  /* ---------- main chat ---------- */
+  .chat-container{width:100%;max-width:640px;height:92vh;background:#fff;border-radius:22px;box-shadow:0 12px 34px rgba(30,40,90,.18);display:flex;flex-direction:column;overflow:hidden;}
+  .chat-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;}
+  .chat-header .title{font-size:1.15rem;font-weight:700;}
+  .chat-header .sub{font-size:.75rem;opacity:.85;}
+  .online-badge{background:rgba(255,255,255,.18);padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600;display:flex;align-items:center;gap:5px;}
+  .online-dot{width:7px;height:7px;background:#4dff88;border-radius:50%;display:inline-block;}
 
-  <!-- เรียกใช้ Firebase SDK ผ่าน CDN -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  .control-bar{display:flex;gap:8px;padding:10px 14px;background:#f6f7fc;border-bottom:1px solid #e7e9f3;align-items:center;flex-wrap:wrap;}
+  .control-bar select{padding:7px 10px;border-radius:8px;border:1px solid #d7dbea;font-size:.85rem;background:#fff;}
+  .user-tag{font-weight:700;color:var(--primary-dark);background:#e9edff;padding:5px 10px;border-radius:14px;font-size:.85rem;}
+  .icon-btn{margin-left:auto;background:#fff;border:1px solid #d7dbea;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.8rem;font-weight:600;color:#555;}
+  .icon-btn:hover{background:#f0f2fb;}
+  .admin-pill{background:#fff3cd;color:#8a6300;border:1px solid #ffe4a1;font-weight:700;}
+
+  .chat-messages{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+  .message{max-width:76%;padding:10px 14px;border-radius:var(--radius);font-size:.93rem;line-height:1.4;word-wrap:break-word;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .message.mine{background:var(--bubble-mine);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+  .message.others{background:var(--bubble-other);color:#2b2f3a;align-self:flex-start;border-bottom-left-radius:4px;}
+  .message.system{align-self:center;background:#fff3cd;color:#8a6300;font-size:.8rem;font-weight:600;border-radius:20px;}
+  .message .meta{font-size:.72rem;opacity:.75;margin-bottom:4px;display:flex;justify-content:space-between;gap:14px;}
+  .message a{color:inherit;font-weight:700;text-decoration:underline;}
+  .badge-tiny{font-size:.68rem;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.08);margin-left:4px;}
+
+  .chat-input{display:flex;gap:8px;padding:12px 14px;background:#fff;border-top:1px solid #e7e9f3;align-items:center;}
+  .chat-input input[type="text"]{flex:1;padding:11px 14px;border:1px solid #d7dbea;border-radius:22px;outline:none;font-size:.92rem;}
+  .chat-input input[type="text"]:focus{border-color:var(--primary);}
+  .btn{padding:10px 18px;border:none;background:var(--primary);color:#fff;border-radius:22px;cursor:pointer;font-weight:700;font-size:.88rem;transition:.15s;}
+  .btn:hover{background:var(--primary-dark);}
+  .btn.danger{background:var(--danger);}
+  .btn.danger:hover{background:#c73438;}
+  .btn.success{background:var(--success);}
+  .file-label{cursor:pointer;padding:9px 12px;background:#6c7688;color:#fff;border-radius:20px;font-size:.8rem;font-weight:600;}
+  .file-label:hover{background:#575f6f;}
+  .selected-file{font-size:.72rem;color:var(--primary-dark);padding:0 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* ---------- admin panel ---------- */
+  .admin-panel{width:100%;max-width:480px;max-height:80vh;overflow-y:auto;text-align:left;}
+  .admin-panel h3{color:var(--primary-dark);margin-bottom:6px;}
+  .section-title{font-weight:700;color:#333;margin:14px 0 6px;font-size:.95rem;border-bottom:2px solid #eef1f8;padding-bottom:4px;}
+  .report-item,.user-item{background:#f6f7fc;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;}
+  .report-item.resolved{opacity:.55;}
+  .report-item .r-meta{font-size:.72rem;color:#777;display:flex;justify-content:space-between;}
+  .report-item .r-text{font-size:.88rem;color:#2b2f3a;}
+  .report-actions{display:flex;gap:6px;}
+  .report-actions button{flex:1;padding:6px;border:none;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;}
+  .user-item{flex-direction:row;justify-content:space-between;align-items:center;}
+  .close-x{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.3rem;color:#999;cursor:pointer;}
+  .card.admin-panel{position:relative;}
+  .empty-note{font-size:.8rem;color:#999;text-align:center;padding:10px 0;}
+
+  /* notif badge on admin button */
+  .notif-badge{background:var(--danger);color:#fff;font-size:.65rem;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:4px;}
+
+  /* toast */
+  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:#2b2f3a;color:#fff;padding:10px 18px;border-radius:12px;font-size:.85rem;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:1500;opacity:0;transition:.25s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* pinned banner */
+  .pinned-banner{background:#fff3cd;color:#8a6300;font-size:.8rem;font-weight:600;padding:8px 16px;text-align:center;border-bottom:1px solid #ffe4a1;display:none;}
+
+  /* admin settings form */
+  .settings-form label{font-size:.78rem;color:#555;font-weight:600;display:block;margin:8px 0 4px;text-align:left;}
+  .settings-form input[type="text"],.settings-form textarea{width:100%;padding:9px 10px;border:1px solid #d7dbea;border-radius:8px;font-size:.85rem;font-family:monospace;}
+  .settings-form input[type="color"]{width:44px;height:34px;border:1px solid #d7dbea;border-radius:8px;padding:2px;cursor:pointer;}
+  .security-note{font-size:.72rem;color:#999;margin-top:6px;line-height:1.4;text-align:left;}
+
+  /* responsive */
+  @media (max-width:480px){
+    .chat-container{height:96vh;border-radius:14px;}
+    .message{max-width:86%;}
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
 </head>
 <body>
 
-<!-- หน้าล็อกอิน -->
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-box">
+<!-- ===== หน้าล็อกอิน ===== -->
+<div class="overlay" id="loginOverlay">
+  <div class="card" id="loginCard">
     <h3>เข้าสู่ระบบแชทออนไลน์</h3>
-    <input type="text" id="nicknameInput" placeholder="ใส่ชื่อเล่นของคุณ..." required>
-    <span class="hint">🌐 ระบบออนไลน์ 100% ผ่าน Cloud</span>
-    <button class="btn" onclick="login()">เข้าสู่ห้องแชท</button>
+    <input type="text" id="nicknameInput" placeholder="ใส่ชื่อเล่นของคุณ..." maxlength="20">
+    <input type="password" id="adminPassInput" placeholder="รหัสแอดมิน (ถ้ามี)" style="display:none;">
+    <span class="hint">🌐 ระบบออนไลน์ผ่าน Cloud • เก็บประวัติแชททั้งหมด</span>
+    <button class="btn" id="loginBtn" onclick="login()">เข้าสู่ห้องแชท</button>
+    <button class="link-btn" id="toggleAdminBtn" onclick="toggleAdminField()">เข้าสู่ระบบในฐานะแอดมิน</button>
   </div>
 </div>
 
-<div class="chat-container">
-  <div class="chat-header">Classroom Cloud Chat</div>
-  
+<!-- ===== หน้าต่างรายงานปัญหา ===== -->
+<div class="overlay" id="reportOverlay" style="display:none;">
+  <div class="card">
+    <button class="close-x" onclick="closeModal('reportOverlay')">&times;</button>
+    <h3>🐞 รายงานปัญหา / ขอฟีเจอร์</h3>
+    <textarea id="reportText" rows="4" placeholder="อธิบายปัญหาที่พบ หรือสิ่งที่ต้องการให้เพิ่ม..."></textarea>
+    <button class="btn" onclick="submitReport()">ส่งรายงานถึงแอดมิน</button>
+  </div>
+</div>
+
+<!-- ===== แผงควบคุมแอดมิน ===== -->
+<div class="overlay" id="adminOverlay" style="display:none;">
+  <div class="card admin-panel">
+    <button class="close-x" onclick="closeModal('adminOverlay')">&times;</button>
+    <h3>🛠 แผงควบคุมแอดมิน</h3>
+
+    <div class="section-title">📣 ส่งประกาศถึงทุกคน</div>
+    <div class="row">
+      <input type="text" id="announceInput" placeholder="พิมพ์ประกาศ...">
+      <button class="btn" style="flex:0 0 auto" onclick="sendAnnouncement()">ส่ง</button>
+    </div>
+
+    <div class="section-title">👥 ผู้ใช้ออนไลน์ (<span id="onlineCountAdmin">0</span>)</div>
+    <div id="userList"></div>
+
+    <div class="section-title">📋 รายงานปัญหาที่ได้รับ</div>
+    <div id="reportList"></div>
+
+    <div class="section-title">🎨 ปรับแต่งหน้าเว็บแบบสด (ทุกคนเห็นทันที)</div>
+    <div class="settings-form">
+      <label>ชื่อห้องแชท (แทน "Classroom Cloud Chat")</label>
+      <input type="text" id="settingTitle" maxlength="40" placeholder="Classroom Cloud Chat">
+
+      <label>ข้อความประกาศปักหมุด (เว้นว่าง = ไม่แสดง)</label>
+      <input type="text" id="settingBanner" maxlength="120" placeholder="เช่น วันนี้เรียนชดเชยห้อง 3...">
+
+      <label>สีหลักของธีม</label>
+      <input type="color" id="settingColor" value="#4b6ef5">
+
+      <label>Custom CSS (สำหรับผู้ที่เข้าใจ CSS)</label>
+      <textarea id="settingCss" rows="4" placeholder=".chat-header{ ... }"></textarea>
+
+      <button class="btn" style="margin-top:10px;width:100%;" onclick="saveSettings()">💾 บันทึกและใช้งานทันที</button>
+      <div class="security-note">
+        ⚠️ ช่องนี้แก้ "รูปลักษณ์" ของหน้าเว็บแบบสดสำหรับทุกคนที่ออนไลน์อยู่ (ผ่าน Firebase) — ไม่ใช่การแก้โค้ด JavaScript ของระบบโดยตรง
+        เพราะการอนุญาตให้รันโค้ด/สคริปต์ที่ส่งผลกับทุกคนจากหน้าเว็บมีความเสี่ยงด้านความปลอดภัยสูง (รหัสแอดมินฝั่ง client ถูกดูได้จาก view-source)
+        หากต้องการแก้ไขโครงสร้างหรือฟังก์ชันการทำงานจริง ๆ ต้องแก้ที่ไฟล์ .html แล้วอัปโหลดใหม่
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ห้องแชทหลัก ===== -->
+<div class="chat-container" id="chatContainer" style="display:none;">
+  <div class="chat-header">
+    <div>
+      <div class="title">Classroom Cloud Chat</div>
+      <div class="sub">ห้องเรียนออนไลน์ • เก็บประวัติแชทอัตโนมัติ</div>
+    </div>
+    <div class="online-badge"><span class="online-dot"></span><span id="onlineCount">0</span> ออนไลน์</div>
+  </div>
+  <div class="pinned-banner" id="pinnedBanner"></div>
+
   <div class="control-bar">
-    <span>คุณ: <span class="user-tag" id="myNickname">-</span></span>
+    <span class="user-tag" id="myNicknameTag">-</span>
     <select id="chatMode" onchange="togglePrivateInput()">
-      <option value="group">แชทกลุ่ม</option>
-      <option value="private">แชทเดี่ยว</option>
+      <option value="group">💬 แชทกลุ่ม</option>
+      <option value="private">🔒 แชทเดี่ยว</option>
     </select>
-    <select id="targetUserSelect" style="display: none; flex: 1;">
-      <option value="">-- เลือกชื่อผู้รับ --</option>
+    <select id="targetUserSelect" style="display:none;">
+      <option value="">-- เลือกผู้รับ --</option>
     </select>
+    <button class="icon-btn" onclick="openModal('reportOverlay')">🐞 รายงานปัญหา</button>
+    <button class="icon-btn admin-pill" id="adminPanelBtn" style="display:none;" onclick="openAdminPanel()">🛠 แอดมิน<span class="notif-badge" id="reportBadge" style="display:none;">0</span></button>
   </div>
 
   <div class="chat-messages" id="chatBox"></div>
 
   <div class="chat-input">
-    <label for="fileInput" class="file-label">📎 ไฟล์</label>
+    <label for="fileInput" class="file-label">📎</label>
     <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelect()">
-    <input type="text" id="messageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <span class="selected-file" id="selectedFileLabel"></span>
+    <input type="text" id="messageInput" placeholder="พิมพ์ข้อความที่นี่แล้วกด Enter..." onkeypress="if(event.key==='Enter'){sendMessage();}">
     <button class="btn" onclick="sendMessage()">ส่ง</button>
   </div>
 </div>
 
 <script>
-  // ตั้งค่าเชื่อมต่อ Firebase (ฐานข้อมูล Cloud ฟรีของ Google)
-  const firebaseConfig = {
-    databaseURL: "https://classroom-chat-demo-default-rtdb.asia-southeast1.firebasedatabase.app/"
-  };
-  
+/* =========================================================================
+   ตั้งค่า Firebase
+   ⚠️ ต้องเปลี่ยนเป็นโปรเจกต์ Firebase ของคุณเอง (ดูคำอธิบายท้ายไฟล์)
+   ========================================================================= */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "YOUR_PROJECT"
+};
+
+const ADMIN_PASSWORD = "admin1234"; // ⚠️ เปลี่ยนรหัสนี้ก่อนใช้งานจริง (ดูคำเตือนด้านล่าง)
+
+/* ประกาศตัวแปรสถานะทั้งหมดไว้บนสุด ก่อนโค้ดที่อาจเกิด error
+   เพื่อไม่ให้ปุ่ม/ฟังก์ชันอื่น ๆ พังไปด้วยหาก Firebase โหลดไม่สำเร็จ */
+var myName = '';
+var isAdmin = false;
+var selectedFileBase64 = null;
+var selectedFileName = '';
+var onlineUsersCache = {};
+var reportsCache = {};
+var db = null;
+var firebaseReady = false;
+var adminPanelOpen = false;
+var knownReportKeys = [];
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+try {
+  if (typeof firebase === 'undefined') {
+    throw new Error('Firebase SDK ไม่ถูกโหลด (สคริปต์จาก CDN โหลดไม่สำเร็จ)');
+  }
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  db = firebase.database();
+  firebaseReady = true;
+} catch (err) {
+  console.error('Firebase init failed:', err);
+  showFatalError('ไม่สามารถเชื่อมต่อกับ Firebase ได้ กรุณาตรวจสอบว่าได้ใส่ค่า firebaseConfig ของโปรเจกต์ตัวเองแล้ว และตรวจสอบการเชื่อมต่ออินเทอร์เน็ต (' + err.message + ')');
+}
 
-  let myName = '';
-  let selectedFileBase64 = null;
-  let selectedFileName = '';
+function showFatalError(msg){
+  const box = document.createElement('div');
+  box.style = 'position:fixed;top:0;left:0;width:100%;background:#e5484d;color:#fff;padding:12px 16px;text-align:center;font-size:.85rem;font-weight:600;z-index:2000;';
+  box.textContent = '⚠️ ' + msg;
+  document.body.appendChild(box);
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) { loginBtn.disabled = true; loginBtn.style.opacity = .5; loginBtn.style.cursor = 'not-allowed'; }
+}
 
-  function login() {
-    myName = document.getElementById('nicknameInput').value.trim();
-    if (!myName) return alert('กรุณาใส่ชื่อเล่น');
+/* ---------------- helper: ป้องกัน XSS ---------------- */
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-    document.getElementById('loginOverlay').style.display = 'none';
-    document.getElementById('myNickname').textContent = myName;
+/* ---------------- login / admin toggle ---------------- */
+function toggleAdminField(){
+  const el = document.getElementById('adminPassInput');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 
-    // ลงทะเบียนคนออนไลน์
-    const userRef = db.ref('users/' + myName);
-    userRef.set({ name: myName, online: true });
-    userRef.onDisconnect().remove(); // ลบชื่อออกเมื่อปิดหน้าเว็บ
+function login(){
+  if (!firebaseReady) return alert('ระบบยังเชื่อมต่อ Firebase ไม่ได้ กรุณาตรวจสอบการตั้งค่าก่อน');
+  const name = document.getElementById('nicknameInput').value.trim();
+  const adminPass = document.getElementById('adminPassInput').value;
 
-    // ดึงรายชื่อคนที่อยู่ออนไลน์จริง
-    db.ref('users').on('value', (snapshot) => {
-      const users = snapshot.val() || {};
-      const select = document.getElementById('targetUserSelect');
-      select.innerHTML = '<option value="">-- เลือกชื่อผู้รับ --</option>';
-      
-      Object.keys(users).forEach(user => {
-        if (user !== myName) {
-          const opt = document.createElement('option');
-          opt.value = user;
-          opt.textContent = user;
-          select.appendChild(opt);
+  if (!name) return alert('กรุณาใส่ชื่อเล่น');
+  if (document.getElementById('adminPassInput').style.display !== 'none' && adminPass){
+    if (adminPass !== ADMIN_PASSWORD) return alert('รหัสแอดมินไม่ถูกต้อง');
+    isAdmin = true;
+  }
+
+  myName = name;
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('chatContainer').style.display = 'flex';
+  document.getElementById('myNicknameTag').textContent = myName + (isAdmin ? ' 🛠' : '');
+  if (isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline-block';
+
+  // ลงทะเบียนผู้ใช้ออนไลน์ + ลบอัตโนมัติเมื่อปิดหน้า
+  const userRef = db.ref('users/' + safeKey(myName));
+  userRef.set({ name: myName, admin: isAdmin, joinedAt: Date.now() });
+  userRef.onDisconnect().remove();
+
+  // รายชื่อผู้ใช้ออนไลน์ (real-time)
+  db.ref('users').on('value', (snapshot) => {
+    const users = snapshot.val() || {};
+    onlineUsersCache = users;
+    renderTargetSelect(users);
+    document.getElementById('onlineCount').textContent = Object.keys(users).length;
+    document.getElementById('onlineCountAdmin').textContent = Object.keys(users).length;
+    if (isAdmin) renderUserList(users);
+  });
+
+  // โหลดประวัติแชททั้งหมด + รับข้อความใหม่แบบ real-time
+  db.ref('messages').on('child_added', (snapshot) => {
+    const data = snapshot.val();
+    if (data.mode === 'group' || data.sender === myName || data.target === myName) {
+      renderMessage(data, data.sender === myName);
+    }
+  }, (err) => {
+    console.error('messages listener error:', err);
+    showToast('⚠️ อ่านข้อความไม่ได้ (ตรวจสอบ Firebase Rules): ' + err.message);
+  });
+
+  // ตั้งค่าหน้าเว็บแบบสด (ใช้กับทุกคนที่ออนไลน์)
+  db.ref('settings').on('value', (snapshot) => {
+    applySettings(snapshot.val() || {});
+  });
+
+  // แอดมิน: ฟังรายงานปัญหาที่เข้ามา
+  if (isAdmin){
+    db.ref('reports').on('value', (snapshot) => {
+      const newData = snapshot.val() || {};
+      const newKeys = Object.keys(newData);
+      const addedKeys = newKeys.filter(k => knownReportKeys.indexOf(k) === -1);
+
+      reportsCache = newData;
+      knownReportKeys = newKeys;
+      renderReportList();
+
+      const openCount = newKeys.filter(k => newData[k].status !== 'resolved').length;
+      updateReportBadge(openCount);
+
+      addedKeys.forEach(k => {
+        if (!adminPanelOpen) {
+          showToast('🐞 มีรายงานปัญหาใหม่จาก ' + newData[k].user);
         }
       });
-    });
-
-    // ฟังข้อความใหม่ที่เข้ามาในระบบ Cloud Realtime
-    db.ref('messages').on('child_added', (snapshot) => {
-      const data = snapshot.val();
-      
-      // กรองข้อความ: แสดงถ้าเป็นแชทกลุ่ม หรือ แชทเดี่ยวที่ส่งหาเรา/เราส่งเอง
-      if (data.mode === 'group' || data.sender === myName || data.target === myName) {
-        renderMessage(data, data.sender === myName);
-      }
+    }, (err) => {
+      console.error('reports listener error:', err);
+      showToast('⚠️ ไม่สามารถอ่านรายงานปัญหาได้ กรุณาตรวจสอบ Firebase Database Rules ว่าอนุญาต read บนเส้นทาง "reports" (' + err.message + ')');
     });
   }
+}
 
-  function togglePrivateInput() {
-    const mode = document.getElementById('chatMode').value;
-    document.getElementById('targetUserSelect').style.display = mode === 'private' ? 'inline-block' : 'none';
-  }
+function safeKey(name){
+  return name.replace(/[.#$/\[\]]/g, '_');
+}
 
-  // อ่านไฟล์แปลงเป็น Base64 ส่งเข้า Cloud
-  function handleFileSelect() {
-    const file = document.getElementById('fileInput').files[0];
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) { // จำกัดขนาดไฟล์ไม่เกิน 3MB
-        alert('กรุณาเลือกไฟล์ขนาดไม่เกิน 3MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        selectedFileBase64 = e.target.result;
-        selectedFileName = file.name;
-        alert(`เลือกไฟล์: ${file.name} แล้ว`);
-      };
-      reader.readAsDataURL(file);
+/* ---------------- private chat target list ---------------- */
+function renderTargetSelect(users){
+  const select = document.getElementById('targetUserSelect');
+  const current = select.value;
+  select.innerHTML = '<option value="">-- เลือกผู้รับ --</option>';
+  Object.values(users).forEach(u => {
+    if (u.name !== myName) {
+      const opt = document.createElement('option');
+      opt.value = u.name;
+      opt.textContent = u.name + (u.admin ? ' 🛠' : '');
+      select.appendChild(opt);
     }
-  }
+  });
+  select.value = current;
+}
 
-  function sendMessage() {
-    const msgText = document.getElementById('messageInput').value.trim();
-    const mode = document.getElementById('chatMode').value;
-    const target = document.getElementById('targetUserSelect').value;
+function togglePrivateInput(){
+  const mode = document.getElementById('chatMode').value;
+  document.getElementById('targetUserSelect').style.display = mode === 'private' ? 'inline-block' : 'none';
+}
 
-    if (mode === 'private' && !target) return alert('กรุณาเลือกผู้รับแชทเดี่ยว');
-    if (!msgText && !selectedFileBase64) return;
-
-    let fileData = null;
-    if (selectedFileBase64) {
-      fileData = { name: selectedFileName, data: selectedFileBase64 };
-    }
-
-    // บันทึกลง Cloud
-    db.ref('messages').push({
-      sender: myName,
-      text: msgText,
-      file: fileData,
-      mode: mode,
-      target: target,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    });
-
-    document.getElementById('messageInput').value = '';
+/* ---------------- file attach ---------------- */
+function handleFileSelect(){
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) return;
+  if (file.size > 3 * 1024 * 1024) {
+    alert('กรุณาเลือกไฟล์ขนาดไม่เกิน 3MB');
     document.getElementById('fileInput').value = '';
-    selectedFileBase64 = null;
-    selectedFileName = '';
+    return;
   }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    selectedFileBase64 = e.target.result;
+    selectedFileName = file.name;
+    document.getElementById('selectedFileLabel').textContent = '📁 ' + file.name;
+  };
+  reader.readAsDataURL(file);
+}
 
-  function renderMessage(data, isMine) {
-    const chatBox = document.getElementById('chatBox');
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('message', isMine ? 'mine' : 'others');
+/* ---------------- send message ---------------- */
+function sendMessage(){
+  const input = document.getElementById('messageInput');
+  const msgText = input.value.trim();
+  const mode = document.getElementById('chatMode').value;
+  const target = document.getElementById('targetUserSelect').value;
 
-    let modeBadge = data.mode === 'private' ? `🔒 [ส่วนตัว]` : '👥 [กลุ่ม]';
-    let contentHtml = `<div class="meta"><span>${data.sender} ${modeBadge}</span><span>${data.time}</span></div>`;
-    
-    if (data.text) contentHtml += `<div>${data.text}</div>`;
-    
-    if (data.file) {
-      contentHtml += `<div style="margin-top: 5px;">
-        📁 <a href="${data.file.data}" download="${data.file.name}" target="_blank">${data.file.name}</a>
-      </div>`;
-    }
+  if (mode === 'private' && !target) { alert('กรุณาเลือกผู้รับแชทเดี่ยว'); return; }
+  if (!msgText && !selectedFileBase64) return;
 
-    msgDiv.innerHTML = contentHtml;
+  let fileData = null;
+  if (selectedFileBase64) fileData = { name: selectedFileName, data: selectedFileBase64 };
+
+  db.ref('messages').push({
+    sender: myName,
+    isAdmin: isAdmin,
+    text: msgText,
+    file: fileData,
+    mode: mode,
+    target: target,
+    time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+    ts: Date.now()
+  });
+
+  input.value = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('selectedFileLabel').textContent = '';
+  selectedFileBase64 = null;
+  selectedFileName = '';
+  input.focus();
+}
+
+/* ---------------- render chat bubble ---------------- */
+function renderMessage(data, isMine){
+  const chatBox = document.getElementById('chatBox');
+  const msgDiv = document.createElement('div');
+
+  if (data.system) {
+    msgDiv.classList.add('message', 'system');
+    msgDiv.textContent = '📣 ' + data.text;
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
+    return;
   }
-</script>
 
+  msgDiv.classList.add('message', isMine ? 'mine' : 'others');
+  const modeBadge = data.mode === 'private' ? '🔒 ส่วนตัว' : '👥 กลุ่ม';
+  const adminBadge = data.isAdmin ? '<span class="badge-tiny">แอดมิน</span>' : '';
+
+  let html = `<div class="meta"><span>${escapeHtml(data.sender)}${adminBadge} · ${modeBadge}</span><span>${escapeHtml(data.time)}</span></div>`;
+  if (data.text) html += `<div>${escapeHtml(data.text)}</div>`;
+  if (data.file) {
+    html += `<div style="margin-top:5px;">📁 <a href="${data.file.data}" download="${escapeHtml(data.file.name)}" target="_blank">${escapeHtml(data.file.name)}</a></div>`;
+  }
+  msgDiv.innerHTML = html;
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* ---------------- report issue (ทุกคนใช้ได้) ---------------- */
+function submitReport(){
+  const text = document.getElementById('reportText').value.trim();
+  if (!text) return alert('กรุณาพิมพ์รายละเอียดปัญหา');
+  db.ref('reports').push({
+    user: myName,
+    text: text,
+    status: 'open',
+    ts: Date.now(),
+    time: new Date().toLocaleString('th-TH')
+  }).then(() => {
+    document.getElementById('reportText').value = '';
+    closeModal('reportOverlay');
+    alert('ส่งรายงานถึงแอดมินแล้ว ขอบคุณครับ/ค่ะ');
+  }).catch((err) => {
+    console.error('submitReport failed:', err);
+    alert('ส่งรายงานไม่สำเร็จ: ' + err.message + '\nกรุณาตรวจสอบ Firebase Database Rules ว่าอนุญาต write บนเส้นทาง "reports"');
+  });
+}
+
+/* ---------------- admin panel ---------------- */
+function openAdminPanel(){
+  adminPanelOpen = true;
+  updateReportBadge(0);
+  renderReportList();
+  prefillSettingsForm();
+  openModal('adminOverlay');
+}
+
+function updateReportBadge(count){
+  const badge = document.getElementById('reportBadge');
+  if (count > 0){
+    badge.style.display = 'inline-block';
+    badge.textContent = count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function prefillSettingsForm(){
+  db.ref('settings').once('value').then(snap => {
+    const s = snap.val() || {};
+    document.getElementById('settingTitle').value = s.title || '';
+    document.getElementById('settingBanner').value = s.banner || '';
+    document.getElementById('settingColor').value = s.color || '#4b6ef5';
+    document.getElementById('settingCss').value = s.customCss || '';
+  });
+}
+
+function saveSettings(){
+  const settings = {
+    title: document.getElementById('settingTitle').value.trim(),
+    banner: document.getElementById('settingBanner').value.trim(),
+    color: document.getElementById('settingColor').value,
+    customCss: document.getElementById('settingCss').value
+  };
+  db.ref('settings').set(settings).then(() => {
+    showToast('✅ บันทึกและใช้งานทันทีแล้ว');
+  }).catch(err => {
+    alert('บันทึกไม่สำเร็จ: ' + err.message);
+  });
+}
+
+function applySettings(s){
+  document.querySelector('.chat-header .title').textContent = s.title || 'Classroom Cloud Chat';
+
+  const banner = document.getElementById('pinnedBanner');
+  if (s.banner){ banner.textContent = '📌 ' + s.banner; banner.style.display = 'block'; }
+  else { banner.style.display = 'none'; }
+
+  if (s.color){
+    document.documentElement.style.setProperty('--primary', s.color);
+    document.documentElement.style.setProperty('--primary-dark', s.color);
+    document.documentElement.style.setProperty('--bubble-mine', s.color);
+  }
+
+  let styleTag = document.getElementById('customStyleInject');
+  if (!styleTag){
+    styleTag = document.createElement('style');
+    styleTag.id = 'customStyleInject';
+    document.head.appendChild(styleTag);
+  }
+  styleTag.textContent = s.customCss || '';
+}
+
+function closeAdminPanel(){ adminPanelOpen = false; closeModal('adminOverlay'); }
+
+function openModal(id){ document.getElementById(id).style.display = 'flex'; }
+function closeModal(id){
+  document.getElementById(id).style.display = 'none';
+  if (id === 'adminOverlay') adminPanelOpen = false;
+}
+
+function renderUserList(users){
+  const container = document.getElementById('userList');
+  container.innerHTML = '';
+  const keys = Object.keys(users);
+  if (keys.length === 0){ container.innerHTML = '<div class="empty-note">ยังไม่มีผู้ใช้ออนไลน์</div>'; return; }
+  keys.forEach(key => {
+    const u = users[key];
+    const div = document.createElement('div');
+    div.className = 'user-item';
+    div.innerHTML = `<span>${escapeHtml(u.name)}${u.admin ? ' 🛠' : ''}</span>`;
+    if (u.name !== myName){
+      const btn = document.createElement('button');
+      btn.textContent = 'ลบออกจากรายชื่อ';
+      btn.style = 'padding:5px 8px;border:none;border-radius:8px;background:#ffe1e1;color:#c73438;font-size:.7rem;font-weight:600;cursor:pointer;';
+      btn.onclick = () => db.ref('users/' + key).remove();
+      div.appendChild(btn);
+    }
+    container.appendChild(div);
+  });
+}
+
+function renderReportList(){
+  const container = document.getElementById('reportList');
+  container.innerHTML = '';
+  const keys = Object.keys(reportsCache).sort((a,b) => (reportsCache[b].ts||0) - (reportsCache[a].ts||0));
+  if (keys.length === 0){ container.innerHTML = '<div class="empty-note">ยังไม่มีรายงานปัญหา</div>'; return; }
+  keys.forEach(key => {
+    const r = reportsCache[key];
+    const div = document.createElement('div');
+    div.className = 'report-item' + (r.status === 'resolved' ? ' resolved' : '');
+    div.innerHTML = `
+      <div class="r-meta"><span>👤 ${escapeHtml(r.user)}</span><span>${escapeHtml(r.time || '')}</span></div>
+      <div class="r-text">${escapeHtml(r.text)}</div>
+      <div class="report-actions"></div>`;
+    const actions = div.querySelector('.report-actions');
+
+    if (r.status !== 'resolved'){
+      const resolveBtn = document.createElement('button');
+      resolveBtn.textContent = '✅ แก้ไขแล้ว';
+      resolveBtn.style.background = '#d7f4e3'; resolveBtn.style.color = '#1f7a4d';
+      resolveBtn.onclick = () => db.ref('reports/' + key + '/status').set('resolved');
+      actions.appendChild(resolveBtn);
+    }
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑 ลบ';
+    delBtn.style.background = '#ffe1e1'; delBtn.style.color = '#c73438';
+    delBtn.onclick = () => db.ref('reports/' + key).remove();
+    actions.appendChild(delBtn);
+
+    container.appendChild(div);
+  });
+}
+
+function sendAnnouncement(){
+  const input = document.getElementById('announceInput');
+  const text = input.value.trim();
+  if (!text) return;
+  db.ref('messages').push({
+    system: true,
+    mode: 'group',
+    text: text,
+    sender: 'ระบบ',
+    time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+    ts: Date.now()
+  });
+  input.value = '';
+}
+</script>
 </body>
 </html>
